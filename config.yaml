@@ -1,0 +1,5 @@
+options:
+  plumgrid-virtual-ip:
+    default: 192.168.100.250
+    type: string
+    description: The IP on which PG Console will be accessible.
