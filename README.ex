@@ -38,11 +38,9 @@ Example Config
         neutron-plugin: "plumgrid"
         plumgrid-virtual-ip: "192.168.100.250"
 
-Provide the virtual IP you want PLUMgrid GUI to be accessible.
-Make sure that it is the same ip specified in the neutron-api charm configuration for PLUMgrid. 
-The virtual IP passed on in the neutron-api charm has to be same as the one passed in the plumgrid-director charm.
-
-You can access the GUI at https://192.168.100.250
+The plumgrid-virtual-ip is the IP address of the PLUMgrid Director's Management interface and that the same IP is used to access PLUMgrid Console.
+Ensure that the same ip is specified in the neutron-api charm configuration.
+Using the example config provided above PLUMgrid Console can be accessed at https://192.168.100.250
 
 # Contact Information
 
