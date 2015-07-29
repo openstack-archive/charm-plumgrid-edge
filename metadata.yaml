@@ -12,9 +12,6 @@ tags:
 requires:
   plumgrid-plugin:
     interface: plumgrid-plugin
-  neutron-plugin-api:
-    interface: neutron-plugin-api
 provides:
   plumgrid:
     interface: plumgrid
-

@@ -7,19 +7,17 @@ Once deployed this charm performs the configurations required for a PLUMgrid Dir
 Step by step instructions on using the charm:
 
     juju deploy neutron-api
-    juju deploy neutron-plumgrid-plugin neutron-api
-    juju deploy neutron-iovisor
-    juju deploy plumgrid-director --to <Machince No of neutron-iovisor>
+    juju deploy neutron-api-plumgrid
+    juju deploy plumgrid-director
 
-    juju add-relation neutron-api neutron-plumgrid-plugin
-    juju add-relation neutron-plumgrid-plugin neutron-iovisor
-    juju add-relation neutron-iovisor plumgrid-director
+    juju add-relation neutron-api neutron-api-plumgrid
+    juju add-relation neutron-api-plumgrid plumgrid-director
 
-For plumgrid-director to work make the configuration in the neutron-api, neutron-plumgrid-plugin and neutron-iovisor charms as specified in the configuration section below.
+For plumgrid-director to work make the configuration in the neutron-api and neutron-api-plumgrid charms as specified in the configuration section below.
 
 # Known Limitations and Issues
 
-This is an early access version of the PLUMgrid Director charm and it is not meant for production deployments. The charm only works with JUNO for now. This charm needs to be deployed on a node where a unit of neutron-iovisor charm exists. Also plumgrid-edge and plumgrid-gateway charms should not be deployed on the same node.
+This is an early access version of the PLUMgrid Director charm and it is not meant for production deployments. The charm only supports Kilo Openstack Release.
 
 # Configuration
 
@@ -27,10 +25,9 @@ Example Config
 
     plumgrid-director:
         plumgrid-virtual-ip: "192.168.100.250"
-    neutron-iovisor:
         install_sources: 'ppa:plumgrid-team/stable'
         install_keys: 'null'
-    neutron-plumgrid-plugin:
+    neutron-api-plumgrid:
         install_sources: 'ppa:plumgrid-team/stable'
         install_keys: 'null'
         enable-metadata: False
@@ -38,9 +35,12 @@ Example Config
         neutron-plugin: "plumgrid"
         plumgrid-virtual-ip: "192.168.100.250"
 
-The plumgrid-virtual-ip is the IP address of the PLUMgrid Director's Management interface and that the same IP is used to access PLUMgrid Console.
-Ensure that the same ip is specified in the neutron-api charm configuration.
-Using the example config provided above PLUMgrid Console can be accessed at https://192.168.100.250
+Provide the virtual IP you want PLUMgrid GUI to be accessible.
+Make sure that it is the same IP specified in the neutron-api charm configuration for PLUMgrid.
+The virtual IP passed on in the neutron-api charm has to be same as the one passed in the plumgrid-director charm.
+Provide the source repo path for PLUMgrid Debs in 'install_sources' and the corresponding keys in 'install_keys'.
+
+You can access the PG Console at https://192.168.100.250
 
 # Contact Information
 
