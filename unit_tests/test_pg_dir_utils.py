@@ -50,9 +50,9 @@ class TestPGDirUtils(CharmTestCase):
         self.os_release.return_value = 'trusty'
         templating.OSConfigRenderer.side_effect = _mock_OSConfigRenderer
         _regconfs = nutils.register_configs()
-        confs = ['/var/lib/libvirt/filesystems/plumgrid/etc/keepalived/keepalived.conf',
-                 '/var/lib/libvirt/filesystems/plumgrid/opt/pg/etc/plumgrid.conf',
-                 '/var/lib/libvirt/filesystems/plumgrid/opt/pg/sal/nginx/conf.d/default.conf',
+        confs = ['/var/lib/libvirt/filesystems/plumgrid-data/conf/etc/keepalived.conf',
+                 '/var/lib/libvirt/filesystems/plumgrid-data/conf/pg/plumgrid.conf',
+                 '/var/lib/libvirt/filesystems/plumgrid-data/conf/pg/nginx.conf',
                  '/var/lib/libvirt/filesystems/plumgrid-data/conf/etc/hostname',
                  '/var/lib/libvirt/filesystems/plumgrid-data/conf/etc/hosts',
                  '/var/lib/libvirt/filesystems/plumgrid-data/conf/pg/ifcs.conf']
@@ -61,20 +61,20 @@ class TestPGDirUtils(CharmTestCase):
     def test_resource_map(self):
         _map = nutils.resource_map()
         svcs = ['plumgrid']
-        confs = [nutils.PGKA_CONF]
+        confs = [nutils.PG_KA_CONF]
         [self.assertIn(q_conf, _map.keys()) for q_conf in confs]
-        self.assertEqual(_map[nutils.PGKA_CONF]['services'], svcs)
+        self.assertEqual(_map[nutils.PG_KA_CONF]['services'], svcs)
 
     def test_restart_map(self):
         _restart_map = nutils.restart_map()
-        PGKA_CONF = '/var/lib/libvirt/filesystems/plumgrid/etc/keepalived/keepalived.conf'
+        PG_KA_CONF = '/var/lib/libvirt/filesystems/plumgrid-data/conf/etc/keepalived.conf'
         expect = OrderedDict([
             (nutils.PG_CONF, ['plumgrid']),
-            (PGKA_CONF, ['plumgrid']),
-            (nutils.PGDEF_CONF, ['plumgrid']),
-            (nutils.PGHN_CONF, ['plumgrid']),
-            (nutils.PGHS_CONF, ['plumgrid']),
-            (nutils.PGIFCS_CONF, []),
+            (PG_KA_CONF, ['plumgrid']),
+            (nutils.PG_DEF_CONF, ['plumgrid']),
+            (nutils.PG_HN_CONF, ['plumgrid']),
+            (nutils.PG_HS_CONF, ['plumgrid']),
+            (nutils.PG_IFCS_CONF, []),
         ])
         self.assertEqual(expect, _restart_map)
         for item in _restart_map:

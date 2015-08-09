@@ -52,8 +52,7 @@ class PGDirHooksTests(CharmTestCase):
         self.configure_sources.assert_called_with(update=True)
         self.apt_install.assert_has_calls([
             call(_pkgs, fatal=True,
-                 options=['--force-yes',
-                          '--option=Dpkg::Options::=--force-confold']),
+                 options=['--force-yes']),
         ])
         self.load_iovisor.assert_called_with()
         self.ensure_mtu.assert_called_with()
@@ -68,8 +67,7 @@ class PGDirHooksTests(CharmTestCase):
         self.configure_sources.assert_called_with(update=True)
         self.apt_install.assert_has_calls([
             call(_pkgs, fatal=True,
-                 options=['--force-yes',
-                          '--option=Dpkg::Options::=--force-confold']),
+                 options=['--force-yes']),
         ])
         self.load_iovisor.assert_called_with()
         self.ensure_mtu.assert_called_with()
@@ -78,13 +76,6 @@ class PGDirHooksTests(CharmTestCase):
         self.CONFIGS.write_all.assert_called_with()
         self.restart_pg.assert_called_with()
 
-    def test_neutron_joined(self):
-        self._call_hook('plumgrid-plugin-relation-joined')
-        self.ensure_mtu.assert_called_with()
-        self.ensure_files.assert_called_with()
-        self.add_lcm_key.assert_called_with()
-        self.CONFIGS.write_all.assert_called_with()
-        self.restart_pg.assert_called_with()
 
     def test_stop(self):
         _pkgs = ['plumgrid-lxc', 'iovisor-dkms']
