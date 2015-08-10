@@ -50,6 +50,24 @@ def install():
     add_lcm_key()
 
 
+@hooks.hook('plumgrid-plugin-relation-joined')
+def plumgrid_dir():
+    '''
+    This hook is run when relation between neutron-api-plumgrid
+    and plumgrid-director is made.
+    '''
+    ensure_mtu()
+    ensure_files()
+    add_lcm_key()
+    CONFIGS.write_all()
+    restart_pg()
+
+@hooks.hook('director-relation-joined')
+def dir_joined():
+    ensure_files()
+    CONFIGS.write_all()
+    restart_pg()
+
 @hooks.hook('config-changed')
 def config_changed():
     '''

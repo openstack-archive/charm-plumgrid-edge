@@ -6,6 +6,11 @@ from charmhelpers.core.hookenv import (
     config,
     unit_get,
 )
+from charmhelpers.core.hookenv import (
+    relation_ids,
+    related_units,
+    relation_get,
+)
 from charmhelpers.contrib.openstack import context
 from charmhelpers.contrib.openstack.utils import get_host_ip
 from charmhelpers.contrib.network.ip import get_address_in_network
@@ -13,6 +18,16 @@ from charmhelpers.contrib.network.ip import get_address_in_network
 import re
 from socket import gethostname as get_unit_hostname
 
+def _pg_dir_ips():
+    '''
+    Inspects plumgrid-director peer relation and returns the ips of the peer directors
+    '''
+    pg_dir_ips = []
+    for rid in relation_ids('director'):
+        for unit in related_units(rid):
+            rdata = relation_get(rid=rid, unit=unit)
+            pg_dir_ips.append(rdata['private-address'])
+    return pg_dir_ips
 
 class PGDirContext(context.NeutronContext):
 
@@ -48,12 +63,24 @@ class PGDirContext(context.NeutronContext):
             return {}
 
         conf = config()
-        pg_ctxt['local_ip'] = \
-            get_address_in_network(network=None,
-                                   fallback=get_host_ip(unit_get('private-address')))
+        pg_dir_ips =_pg_dir_ips()
+        pg_dir_ips.append(str(get_address_in_network(network=None,
+                                                  fallback=get_host_ip(unit_get('private-address')))))
+        pg_ctxt['director_ips'] = pg_dir_ips
+        pg_dir_ips_string = ''
+        single_ip = True
+        for ip in pg_dir_ips:
+            if single_ip:
+                pg_dir_ips_string = str(ip)
+                single_ip = False
+            else:
+                pg_dir_ips_string = pg_dir_ips_string + ',' + str(ip)
+        pg_ctxt['director_ips_string'] = pg_dir_ips_string
         pg_ctxt['virtual_ip'] = conf['plumgrid-virtual-ip']
         pg_ctxt['pg_hostname'] = "pg-director"
-        pg_ctxt['interface'] = "juju-br0"
+        from pg_dir_utils import check_interface_type
+        interface_type = check_interface_type()
+        pg_ctxt['interface'] = interface_type
         pg_ctxt['label'] = get_unit_hostname()
         pg_ctxt['fabric_mode'] = 'host'
         virtual_ip_array = re.split('\.', conf['plumgrid-virtual-ip'])

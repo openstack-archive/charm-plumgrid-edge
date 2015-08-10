@@ -15,3 +15,7 @@ requires:
 provides:
   plumgrid:
     interface: plumgrid
+peers:
+  director:
+    interface: director
+
