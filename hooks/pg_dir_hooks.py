@@ -21,7 +21,6 @@ from charmhelpers.fetch import (
 
 from pg_dir_utils import (
     register_configs,
-    ensure_files,
     restart_pg,
     stop_pg,
     determine_packages,
@@ -46,27 +45,17 @@ def install():
         apt_install(pkg, options=['--force-yes'], fatal=True)
     load_iovisor()
     ensure_mtu()
-    ensure_files()
     add_lcm_key()
 
-
-@hooks.hook('plumgrid-plugin-relation-joined')
-def plumgrid_dir():
-    '''
-    This hook is run when relation between neutron-api-plumgrid
-    and plumgrid-director is made.
-    '''
-    ensure_mtu()
-    ensure_files()
-    add_lcm_key()
-    CONFIGS.write_all()
-    restart_pg()
 
 @hooks.hook('director-relation-joined')
 def dir_joined():
-    ensure_files()
+    '''
+    This hook is run when a unit of director is added.
+    '''
     CONFIGS.write_all()
     restart_pg()
+
 
 @hooks.hook('config-changed')
 def config_changed():
@@ -81,7 +70,6 @@ def config_changed():
         apt_install(pkg, options=['--force-yes'], fatal=True)
     load_iovisor()
     ensure_mtu()
-    ensure_files()
     add_lcm_key()
     CONFIGS.write_all()
     restart_pg()

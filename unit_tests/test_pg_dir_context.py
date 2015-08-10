@@ -1,10 +1,10 @@
 from test_utils import CharmTestCase
 from mock import patch
 import pg_dir_context as context
+import pg_dir_utils as utils
 import charmhelpers
 
 TO_PATCH = [
-    #'resolve_address',
     'config',
     'unit_get',
     'get_host_ip',
@@ -44,7 +44,9 @@ class PGDirContextTest(CharmTestCase):
     @patch.object(charmhelpers.contrib.openstack.context,
                   'neutron_plugin_attribute')
     @patch.object(charmhelpers.contrib.openstack.context, 'unit_private_ip')
-    def test_neutroncc_context_api_rel(self, _unit_priv_ip, _npa, _ens_pkgs,
+    @patch.object(context, '_pg_dir_ips')
+    @patch.object(utils, 'check_interface_type')
+    def test_neutroncc_context_api_rel(self, _int_type, _pg_dir_ips, _unit_priv_ip, _npa, _ens_pkgs,
                                        _save_ff, _https, _is_clus, _unit_get,
                                        _config, _runits, _rids, _rget):
         def mock_npa(plugin, section, manager):
@@ -68,6 +70,8 @@ class PGDirContextTest(CharmTestCase):
         _unit_priv_ip.return_value = '192.168.100.201'
         self.get_unit_hostname.return_value = 'node0'
         self.get_host_ip.return_value = '192.168.100.201'
+        _pg_dir_ips.return_value = ['192.168.100.202', '192.168.100.203']
+        _int_type.return_value = 'juju-br0'
         napi_ctxt = context.PGDirContext()
         expect = {
             'config': 'neutron.randomconfig',
@@ -83,5 +87,7 @@ class PGDirContextTest(CharmTestCase):
             'label': 'node0',
             'fabric_mode': 'host',
             'virtual_router_id': '250',
+            'director_ips': ['192.168.100.202', '192.168.100.203', '192.168.100.201'],
+            'director_ips_string': '192.168.100.202,192.168.100.203,192.168.100.201',
         }
         self.assertEquals(expect, napi_ctxt())

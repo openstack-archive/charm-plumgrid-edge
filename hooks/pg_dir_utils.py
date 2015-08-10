@@ -103,15 +103,6 @@ def restart_map():
     return {cfg: rscs['services'] for cfg, rscs in resource_map().iteritems()}
 
 
-def ensure_files():
-    '''
-    Ensures PLUMgrid specific files exist before templates are written.
-    '''
-    #_exec_cmd(cmd=['mkdir', '/etc/nova'])
-    #_exec_cmd(cmd=['touch', 'neutron_plugin.conf'])
-    pass
-
-
 def restart_pg():
     '''
     Stops and Starts PLUMgrid service after flushing iptables.
@@ -144,6 +135,7 @@ def remove_iovisor():
     '''
     _exec_cmd(cmd=['rmmod', 'iovisor'], error_msg='Error Loading IOVisor Kernel Module')
 
+
 def check_interface_type():
     '''
     Checks the interface. Support added for AWS deployments. There are 2
@@ -152,12 +144,13 @@ def check_interface_type():
     log("Checking Interface Type")
     default_interface = "juju-br0"
     AWS_interface = "eth0"
-    shell_output = subprocess.check_output(['brctl','show','juju-br0'])
-    output = re.split(' |\n|\t',shell_output)
+    shell_output = subprocess.check_output(['brctl', 'show', 'juju-br0'])
+    output = re.split(' |\n|\t', shell_output)
     if output[10] == '':
         return AWS_interface
     else:
         return default_interface
+
 
 def ensure_mtu():
     '''

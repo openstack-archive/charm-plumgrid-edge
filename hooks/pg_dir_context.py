@@ -18,6 +18,7 @@ from charmhelpers.contrib.network.ip import get_address_in_network
 import re
 from socket import gethostname as get_unit_hostname
 
+
 def _pg_dir_ips():
     '''
     Inspects plumgrid-director peer relation and returns the ips of the peer directors
@@ -28,6 +29,7 @@ def _pg_dir_ips():
             rdata = relation_get(rid=rid, unit=unit)
             pg_dir_ips.append(rdata['private-address'])
     return pg_dir_ips
+
 
 class PGDirContext(context.NeutronContext):
 
@@ -63,9 +65,8 @@ class PGDirContext(context.NeutronContext):
             return {}
 
         conf = config()
-        pg_dir_ips =_pg_dir_ips()
-        pg_dir_ips.append(str(get_address_in_network(network=None,
-                                                  fallback=get_host_ip(unit_get('private-address')))))
+        pg_dir_ips = _pg_dir_ips()
+        pg_dir_ips.append(str(get_address_in_network(network=None, fallback=get_host_ip(unit_get('private-address')))))
         pg_ctxt['director_ips'] = pg_dir_ips
         pg_dir_ips_string = ''
         single_ip = True

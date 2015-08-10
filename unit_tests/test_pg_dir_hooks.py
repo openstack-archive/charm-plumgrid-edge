@@ -22,7 +22,6 @@ TO_PATCH = [
     'CONFIGS',
     'log',
     'configure_sources',
-    'ensure_files',
     'stop_pg',
     'restart_pg',
     'load_iovisor',
@@ -56,7 +55,6 @@ class PGDirHooksTests(CharmTestCase):
         ])
         self.load_iovisor.assert_called_with()
         self.ensure_mtu.assert_called_with()
-        self.ensure_files.assert_called_with()
         self.add_lcm_key.assert_called_with()
 
     def test_config_changed_hook(self):
@@ -71,7 +69,6 @@ class PGDirHooksTests(CharmTestCase):
         ])
         self.load_iovisor.assert_called_with()
         self.ensure_mtu.assert_called_with()
-        self.ensure_files.assert_called_with()
         self.add_lcm_key.assert_called_with()
         self.CONFIGS.write_all.assert_called_with()
         self.restart_pg.assert_called_with()
