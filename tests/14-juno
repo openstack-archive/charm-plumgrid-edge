@@ -42,14 +42,6 @@ class TestDeployment(unittest.TestCase):
                 amulet.FAIL,
                 msg='plumgrid director is not in a started state')
 
-    def test_plumgrid_director_relation(self):
-        pg_sentry = self.deployment.sentry['plumgrid-director/0']
-        relation = pg_sentry.relation(
-            'plumgrid-plugin', 'neutron-iovisor:plumgrid-plugin')
-        if not relation['private-address']:
-            amulet.raise_status(
-                amulet.FAIL,
-                msg='Relation not found.')
 
 if __name__ == '__main__':
     unittest.main()
