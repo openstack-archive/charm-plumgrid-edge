@@ -24,6 +24,7 @@ import subprocess
 import time
 import os
 import re
+import json
 
 LXC_CONF = '/etc/libvirt/lxc.conf'
 TEMPLATES = 'templates/'
@@ -36,6 +37,8 @@ PG_HN_CONF = '%s/conf/etc/hostname' % PG_LXC_DATA_PATH
 PG_HS_CONF = '%s/conf/etc/hosts' % PG_LXC_DATA_PATH
 PG_IFCS_CONF = '%s/conf/pg/ifcs.conf' % PG_LXC_DATA_PATH
 AUTH_KEY_PATH = '%s/root/.ssh/authorized_keys' % PG_LXC_DATA_PATH
+TEMP_LICENSE_FILE = '/tmp/license'
+
 
 BASE_RESOURCE_MAP = OrderedDict([
     (PG_KA_CONF, {
@@ -212,3 +215,44 @@ def add_lcm_key():
     fa.write(key)
     fa.write('\n')
     fa.close()
+    return 1
+
+
+def post_pg_license():
+    '''
+    Posts PLUMgrid License if it hasnt been posted already.
+    '''
+    key = config('plumgrid-license-key')
+    if key is None:
+        log('PLUMgrid License Key not specified')
+        return 0
+    file_write_type = 'w+'
+    if os.path.isfile(TEMP_LICENSE_FILE):
+        file_write_type = 'w'
+        try:
+            fr = open(TEMP_LICENSE_FILE, 'r')
+        except IOError:
+            return 0
+        for line in fr:
+            if key in line:
+                log('Key already Posted')
+                return 0
+    try:
+        fa = open(TEMP_LICENSE_FILE, file_write_type)
+    except IOError:
+        log('Error opening file to append')
+        return 0
+    fa.write(key)
+    fa.write('\n')
+    fa.close()
+    LICENSE_POST_PATH = 'https://%s/0/tenant_manager/license_key' % config('plumgrid-virtual-ip')
+    PG_CURL = '/var/lib/libvirt/filesystems/plumgrid/opt/pg/scripts/pg_curl.sh'
+    license = {"key1": {"license": key}}
+    lisence_post_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_POST_PATH, '-d', json.dumps(license)]
+    _exec_cmd(cmd=lisence_post_cmd, error_msg='Command exited with ERRORs', fatal=False)
+    return 1
+
+
+def remove_pg_license():
+    if os.path.isfile(TEMP_LICENSE_FILE):
+        os.remove(TEMP_LICENSE_FILE)

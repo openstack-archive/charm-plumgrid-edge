@@ -28,6 +28,8 @@ from pg_dir_utils import (
     remove_iovisor,
     ensure_mtu,
     add_lcm_key,
+    post_pg_license,
+    remove_pg_license,
 )
 
 hooks = Hooks()
@@ -45,6 +47,7 @@ def install():
         apt_install(pkg, options=['--force-yes'], fatal=True)
     load_iovisor()
     ensure_mtu()
+    post_pg_license()
     add_lcm_key()
 
 
@@ -63,6 +66,12 @@ def config_changed():
     This hook is run when a config parameter is changed.
     It also runs on node reboot.
     '''
+    if post_pg_license():
+        log("PLUMgrid License Posted")
+        return 1
+    if add_lcm_key():
+        log("PLUMgrid LCM Key added")
+        return 1
     stop_pg()
     configure_sources(update=True)
     pkgs = determine_packages()
@@ -82,6 +91,7 @@ def stop():
     '''
     stop_pg()
     remove_iovisor()
+    remove_pg_license()
     pkgs = determine_packages()
     for pkg in pkgs:
         apt_purge(pkg, fatal=False)
