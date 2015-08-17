@@ -29,7 +29,6 @@ from pg_dir_utils import (
     ensure_mtu,
     add_lcm_key,
     post_pg_license,
-    remove_pg_license,
 )
 
 hooks = Hooks()
@@ -91,7 +90,6 @@ def stop():
     '''
     stop_pg()
     remove_iovisor()
-    remove_pg_license()
     pkgs = determine_packages()
     for pkg in pkgs:
         apt_purge(pkg, fatal=False)

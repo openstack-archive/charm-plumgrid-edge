@@ -41,6 +41,10 @@ Provide the source repo path for PLUMgrid Debs in 'install_sources' and the corr
 
 You can access the PG Console at https://192.168.100.250
 
+In order to configure networking, PLUMgrid License needs to be posted.
+
+    juju set plumgrid-director plumgrid-license-key="$LICENSE_KEY"
+
 # Contact Information
 
 Bilal Baqar <bbaqar@plumgrid.com>

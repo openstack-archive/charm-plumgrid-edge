@@ -29,6 +29,7 @@ import json
 LXC_CONF = '/etc/libvirt/lxc.conf'
 TEMPLATES = 'templates/'
 PG_LXC_DATA_PATH = '/var/lib/libvirt/filesystems/plumgrid-data'
+PG_LXC_PATH = '/var/lib/libvirt/filesystems/plumgrid'
 
 PG_CONF = '%s/conf/pg/plumgrid.conf' % PG_LXC_DATA_PATH
 PG_KA_CONF = '%s/conf/etc/keepalived.conf' % PG_LXC_DATA_PATH
@@ -226,33 +227,21 @@ def post_pg_license():
     if key is None:
         log('PLUMgrid License Key not specified')
         return 0
-    file_write_type = 'w+'
-    if os.path.isfile(TEMP_LICENSE_FILE):
-        file_write_type = 'w'
-        try:
-            fr = open(TEMP_LICENSE_FILE, 'r')
-        except IOError:
-            return 0
-        for line in fr:
-            if key in line:
-                log('Key already Posted')
-                return 0
-    try:
-        fa = open(TEMP_LICENSE_FILE, file_write_type)
-    except IOError:
-        log('Error opening file to append')
-        return 0
-    fa.write(key)
-    fa.write('\n')
-    fa.close()
-    LICENSE_POST_PATH = 'https://%s/0/tenant_manager/license_key' % config('plumgrid-virtual-ip')
-    PG_CURL = '/var/lib/libvirt/filesystems/plumgrid/opt/pg/scripts/pg_curl.sh'
+    PG_VIP = config('plumgrid-virtual-ip')
+    LICENSE_POST_PATH = 'https://%s/0/tenant_manager/license_key' % PG_VIP
+    LICENSE_GET_PATH = 'https://%s/0/tenant_manager/licenses' % PG_VIP
+    PG_CURL = '%s/opt/pg/scripts/pg_curl.sh' % PG_LXC_PATH
     license = {"key1": {"license": key}}
-    lisence_post_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_POST_PATH, '-d', json.dumps(license)]
-    _exec_cmd(cmd=lisence_post_cmd, error_msg='Command exited with ERRORs', fatal=False)
+    licence_post_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_POST_PATH, '-d', json.dumps(license)]
+    licence_get_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_GET_PATH]
+    try:
+        old_license = subprocess.check_output(licence_get_cmd)
+    except subprocess.CalledProcessError:
+        log('Virtual IP Changed')
+        return 0
+    _exec_cmd(cmd=licence_post_cmd, error_msg='Unable to post License', fatal=False)
+    new_license = subprocess.check_output(licence_get_cmd)
+    if old_license == new_license:
+        log('PLUMgrid License already posted')
+        return 0
     return 1
-
-
-def remove_pg_license():
-    if os.path.isfile(TEMP_LICENSE_FILE):
-        os.remove(TEMP_LICENSE_FILE)
