@@ -137,7 +137,8 @@ def remove_iovisor():
     '''
     Removes iovisor kernel module.
     '''
-    _exec_cmd(cmd=['rmmod', 'iovisor'], error_msg='Error Loading IOVisor Kernel Module')
+    _exec_cmd(cmd=['rmmod', 'iovisor'],
+              error_msg='Error Loading IOVisor Kernel Module')
 
 
 def check_interface_type():
@@ -232,16 +233,24 @@ def post_pg_license():
     LICENSE_GET_PATH = 'https://%s/0/tenant_manager/licenses' % PG_VIP
     PG_CURL = '%s/opt/pg/scripts/pg_curl.sh' % PG_LXC_PATH
     license = {"key1": {"license": key}}
-    licence_post_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_POST_PATH, '-d', json.dumps(license)]
+    licence_post_cmd = [
+        PG_CURL,
+        '-u',
+        'plumgrid:plumgrid',
+        LICENSE_POST_PATH,
+        '-d',
+        json.dumps(license)
+        ]
     licence_get_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_GET_PATH]
     try:
         old_license = subprocess.check_output(licence_get_cmd)
     except subprocess.CalledProcessError:
-        log('Virtual IP Changed')
+        log('No response from specified virtual IP')
         return 0
-    _exec_cmd(cmd=licence_post_cmd, error_msg='Unable to post License', fatal=False)
+    _exec_cmd(cmd=licence_post_cmd,
+              error_msg='Unable to post License', fatal=False)
     new_license = subprocess.check_output(licence_get_cmd)
     if old_license == new_license:
-        log('PLUMgrid License already posted')
+        log('No change in PLUMgrid License')
         return 0
     return 1

@@ -1,6 +1,7 @@
 # Copyright (c) 2015, PLUMgrid Inc, http://plumgrid.com
 
-# This file contains the class that generates context for PLUMgrid template files.
+# This file contains the class that generates context
+# for PLUMgrid template files.
 
 from charmhelpers.core.hookenv import (
     config,
@@ -21,7 +22,8 @@ from socket import gethostname as get_unit_hostname
 
 def _pg_dir_ips():
     '''
-    Inspects plumgrid-director peer relation and returns the ips of the peer directors
+    Inspects plumgrid-director peer relation and returns the
+    ips of the peer directors
     '''
     pg_dir_ips = []
     for rid in relation_ids('director'):
@@ -58,7 +60,8 @@ class PGDirContext(context.NeutronContext):
 
     def pg_ctxt(self):
         '''
-        Generated Config for all PLUMgrid templates inside the templates folder.
+        Generated Config for all PLUMgrid templates inside the templates
+        folder.
         '''
         pg_ctxt = super(PGDirContext, self).pg_ctxt()
         if not pg_ctxt:
@@ -66,7 +69,8 @@ class PGDirContext(context.NeutronContext):
 
         conf = config()
         pg_dir_ips = _pg_dir_ips()
-        pg_dir_ips.append(str(get_address_in_network(network=None, fallback=get_host_ip(unit_get('private-address')))))
+        pg_dir_ips.append(str(get_address_in_network(network=None,
+                          fallback=get_host_ip(unit_get('private-address')))))
         pg_ctxt['director_ips'] = pg_dir_ips
         pg_dir_ips_string = ''
         single_ip = True

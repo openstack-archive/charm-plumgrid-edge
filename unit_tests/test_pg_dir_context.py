@@ -46,9 +46,11 @@ class PGDirContextTest(CharmTestCase):
     @patch.object(charmhelpers.contrib.openstack.context, 'unit_private_ip')
     @patch.object(context, '_pg_dir_ips')
     @patch.object(utils, 'check_interface_type')
-    def test_neutroncc_context_api_rel(self, _int_type, _pg_dir_ips, _unit_priv_ip, _npa, _ens_pkgs,
-                                       _save_ff, _https, _is_clus, _unit_get,
-                                       _config, _runits, _rids, _rget):
+    def test_neutroncc_context_api_rel(self, _int_type, _pg_dir_ips,
+                                       _unit_priv_ip, _npa, _ens_pkgs,
+                                       _save_ff, _https, _is_clus,
+                                       _unit_get, _config, _runits, _rids,
+                                       _rget):
         def mock_npa(plugin, section, manager):
             if section == "driver":
                 return "neutron.randomdriver"
@@ -87,7 +89,9 @@ class PGDirContextTest(CharmTestCase):
             'label': 'node0',
             'fabric_mode': 'host',
             'virtual_router_id': '250',
-            'director_ips': ['192.168.100.202', '192.168.100.203', '192.168.100.201'],
-            'director_ips_string': '192.168.100.202,192.168.100.203,192.168.100.201',
+            'director_ips': ['192.168.100.202', '192.168.100.203',
+                             '192.168.100.201'],
+            'director_ips_string':
+            '192.168.100.202,192.168.100.203,192.168.100.201',
         }
         self.assertEquals(expect, napi_ctxt())

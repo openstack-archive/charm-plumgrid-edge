@@ -6,11 +6,12 @@
 # in this file.
 
 import sys
-
+import time
 from charmhelpers.core.hookenv import (
     Hooks,
     UnregisteredHookError,
     log,
+    config,
 )
 
 from charmhelpers.fetch import (
@@ -46,7 +47,6 @@ def install():
         apt_install(pkg, options=['--force-yes'], fatal=True)
     load_iovisor()
     ensure_mtu()
-    post_pg_license()
     add_lcm_key()
 
 
@@ -81,6 +81,20 @@ def config_changed():
     add_lcm_key()
     CONFIGS.write_all()
     restart_pg()
+
+
+@hooks.hook('start')
+def start():
+    '''
+    This hook is run when the charm is started.
+    '''
+    if config('plumgrid-license-key') is not None:
+        count = 0
+        while (count < 10):
+            if post_pg_license():
+                break
+            count = count + 1
+            time.sleep(15)
 
 
 @hooks.hook('stop')

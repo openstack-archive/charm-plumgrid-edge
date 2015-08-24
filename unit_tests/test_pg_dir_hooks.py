@@ -28,7 +28,8 @@ TO_PATCH = [
     'ensure_mtu',
     'add_lcm_key',
     'determine_packages',
-    'post_pg_license'
+    'post_pg_license',
+    'config'
 ]
 NEUTRON_CONF_DIR = "/etc/neutron"
 
@@ -39,6 +40,7 @@ class PGDirHooksTests(CharmTestCase):
 
     def setUp(self):
         super(PGDirHooksTests, self).setUp(hooks, TO_PATCH)
+        self.config.side_effect = self.test_config.get
         hooks.hooks._config_save = False
 
     def _call_hook(self, hookname):
@@ -56,7 +58,6 @@ class PGDirHooksTests(CharmTestCase):
         ])
         self.load_iovisor.assert_called_with()
         self.ensure_mtu.assert_called_with()
-        self.post_pg_license.assert_called_with()
         self.add_lcm_key.assert_called_with()
 
     def test_config_changed_hook(self):
@@ -76,6 +77,10 @@ class PGDirHooksTests(CharmTestCase):
 
         self.CONFIGS.write_all.assert_called_with()
         self.restart_pg.assert_called_with()
+
+    def test_start(self):
+        self._call_hook('start')
+        self.test_config.set('plumgrid-license-key', None)
 
     def test_stop(self):
         _pkgs = ['plumgrid-lxc', 'iovisor-dkms']

@@ -4,7 +4,7 @@ Once deployed this charm performs the configurations required for a PLUMgrid Dir
 
 # Usage
 
-Step by step instructions on using the charm:
+Instructions on using the charm:
 
     juju deploy neutron-api
     juju deploy neutron-api-plumgrid
