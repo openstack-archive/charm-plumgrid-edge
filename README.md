@@ -1,6 +1,16 @@
+# About the PLUMgrid Platform
+
+The [PLUMgrid Platform](http://www.plumgrid.com/technology/plumgrid-platform/) is a software-only solution that provides a rich set of distributed network functions such as routers, switches, NAT, IPAM, DHCP, and it also supports security policies, end-to-end encryption, and third party Layer 4-7 service insertion.
+
+## About Plumgrid Director
+
+The Director is the brain of the PLUMgrid Platform. It is responsible for coordinating and managing all the other platform components. Based on PLUMgrid's distributed system architecture, it provides built-in high availability and scaling. The Director allows you to create Virtual Domains on a per tenant or application basis.
+
+
 # Overview
 
 Once deployed this charm performs the configurations required for a PLUMgrid Director and starts the essential services on the node.
+
 
 # Usage
 
