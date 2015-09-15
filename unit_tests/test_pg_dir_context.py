@@ -45,8 +45,8 @@ class PGDirContextTest(CharmTestCase):
                   'neutron_plugin_attribute')
     @patch.object(charmhelpers.contrib.openstack.context, 'unit_private_ip')
     @patch.object(context, '_pg_dir_ips')
-    @patch.object(utils, 'check_interface_type')
-    def test_neutroncc_context_api_rel(self, _int_type, _pg_dir_ips,
+    @patch.object(utils, 'get_mgmt_interface')
+    def test_neutroncc_context_api_rel(self, _mgmt_int, _pg_dir_ips,
                                        _unit_priv_ip, _npa, _ens_pkgs,
                                        _save_ff, _https, _is_clus,
                                        _unit_get, _config, _runits, _rids,
@@ -73,7 +73,7 @@ class PGDirContextTest(CharmTestCase):
         self.get_unit_hostname.return_value = 'node0'
         self.get_host_ip.return_value = '192.168.100.201'
         _pg_dir_ips.return_value = ['192.168.100.202', '192.168.100.203']
-        _int_type.return_value = 'juju-br0'
+        _mgmt_int.return_value = 'juju-br0'
         napi_ctxt = context.PGDirContext()
         expect = {
             'config': 'neutron.randomconfig',

@@ -83,9 +83,8 @@ class PGDirContext(context.NeutronContext):
         pg_ctxt['director_ips_string'] = pg_dir_ips_string
         pg_ctxt['virtual_ip'] = conf['plumgrid-virtual-ip']
         pg_ctxt['pg_hostname'] = "pg-director"
-        from pg_dir_utils import check_interface_type
-        interface_type = check_interface_type()
-        pg_ctxt['interface'] = interface_type
+        from pg_dir_utils import get_mgmt_interface
+        pg_ctxt['interface'] = get_mgmt_interface()
         pg_ctxt['label'] = get_unit_hostname()
         pg_ctxt['fabric_mode'] = 'host'
         virtual_ip_array = re.split('\.', conf['plumgrid-virtual-ip'])
