@@ -7,6 +7,13 @@ from copy import deepcopy
 from charmhelpers.core.hookenv import (
     log,
     config,
+    unit_get,
+)
+from charmhelpers.contrib.network.ip import (
+    get_iface_from_addr,
+    get_bridges,
+    get_bridge_nics,
+    is_ip
 )
 from charmhelpers.contrib.openstack import templating
 from charmhelpers.core.host import set_nic_mtu
@@ -23,7 +30,6 @@ import pg_dir_context
 import subprocess
 import time
 import os
-import re
 import json
 
 LXC_CONF = '/etc/libvirt/lxc.conf'
@@ -141,36 +147,42 @@ def remove_iovisor():
               error_msg='Error Loading IOVisor Kernel Module')
 
 
-def check_interface_type():
+def get_mgmt_interface():
     '''
-    Checks the interface. Support added for AWS deployments. There are 2
-    possible interfaces "juju-br0" and "eth0". The default being juju-br0
+    Returns the managment interface.
     '''
-    log("Checking Interface Type")
-    default_interface = "juju-br0"
-    AWS_interface = "eth0"
-    shell_output = subprocess.check_output(['brctl', 'show', 'juju-br0'])
-    output = re.split(' |\n|\t', shell_output)
-    if output[10] == '':
-        return AWS_interface
+    def interface_exists(interface):
+        '''
+        Checks if interface exists on node.
+        '''
+        try:
+            subprocess.check_call(['ip', 'link', 'show', interface],
+                                  stdout=open(os.devnull, 'w'),
+                                  stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            return False
+        return True
+
+    mgmt_interface = config('mgmt-interface')
+    if interface_exists(mgmt_interface):
+        return mgmt_interface
     else:
-        return default_interface
+        log('Provided managment interface %s does not exist'
+            % mgmt_interface)
+        return get_iface_from_addr(unit_get('private-address'))
 
 
 def ensure_mtu():
     '''
     Ensures required MTU of the underlying networking of the node.
     '''
-    log("Changing MTU of juju-br0 and all attached interfaces")
     interface_mtu = config('network-device-mtu')
-    interface_type = check_interface_type()
-    if interface_type == "juju-br0":
-        cmd = subprocess.check_output(["brctl", "show", interface_type])
-        words = cmd.split()
-        for word in words:
-            if 'eth' in word:
-                set_nic_mtu(word, interface_mtu)
-    set_nic_mtu(interface_type, interface_mtu)
+    mgmt_interface = get_mgmt_interface()
+    if mgmt_interface in get_bridges():
+        attached_interfaces = get_bridge_nics(mgmt_interface)
+        for interface in attached_interfaces:
+            set_nic_mtu(interface, interface_mtu)
+    set_nic_mtu(mgmt_interface, interface_mtu)
 
 
 def _exec_cmd(cmd=None, error_msg='Command exited with ERRORs', fatal=False):
@@ -229,6 +241,8 @@ def post_pg_license():
         log('PLUMgrid License Key not specified')
         return 0
     PG_VIP = config('plumgrid-virtual-ip')
+    if not is_ip(PG_VIP):
+        raise ValueError('Invalid IP Provided')
     LICENSE_POST_PATH = 'https://%s/0/tenant_manager/license_key' % PG_VIP
     LICENSE_GET_PATH = 'https://%s/0/tenant_manager/licenses' % PG_VIP
     PG_CURL = '%s/opt/pg/scripts/pg_curl.sh' % PG_LXC_PATH
