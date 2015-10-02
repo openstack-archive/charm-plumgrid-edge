@@ -15,6 +15,9 @@ from charmhelpers.contrib.network.ip import (
     get_bridge_nics,
     is_ip
 )
+from charmhelpers.fetch import (
+    apt_cache
+)
 from charmhelpers.contrib.openstack import templating
 from charmhelpers.core.host import set_nic_mtu
 from collections import OrderedDict
@@ -80,7 +83,25 @@ def determine_packages():
     Returns list of packages required by PLUMgrid director as specified
     in the neutron_plugins dictionary in charmhelpers.
     '''
-    return neutron_plugin_attribute('plumgrid', 'packages', 'neutron')
+    pkgs = []
+    tag = 'latest'
+    for pkg in neutron_plugin_attribute('plumgrid', 'packages', 'neutron'):
+        if 'plumgrid' in pkg:
+            tag = config('plumgrid-build')
+        elif pkg == 'iovisor-dkms':
+            tag = config('iovisor-build')
+
+        if tag == 'latest':
+            pkgs.append(pkg)
+        else:
+            if tag in [i.ver_str for i in apt_cache()[pkg].version_list]:
+                pkgs.append('%s=%s' % (pkg, tag))
+            else:
+                error_msg = \
+                    "Build version '%s' for package '%s' not available" \
+                    % (tag, pkg)
+                raise ValueError(error_msg)
+    return pkgs
 
 
 def register_configs(release=None):
