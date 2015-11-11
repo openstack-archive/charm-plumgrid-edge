@@ -166,6 +166,7 @@ def remove_iovisor():
     '''
     _exec_cmd(cmd=['rmmod', 'iovisor'],
               error_msg='Error Loading IOVisor Kernel Module')
+    time.sleep(1)
 
 
 def get_mgmt_interface():
