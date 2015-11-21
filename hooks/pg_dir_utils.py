@@ -198,6 +198,22 @@ def get_mgmt_interface():
         return get_iface_from_addr(unit_get('private-address'))
 
 
+def fabric_interface_changed():
+    '''
+    Returns true if interface for node changed.
+    '''
+    fabric_interface = get_fabric_interface()
+    try:
+        with open(PG_IFCS_CONF, 'r') as ifcs:
+            for line in ifcs:
+                if 'fabric_core' in line:
+                    if line.split()[0] == fabric_interface:
+                        return False
+    except IOError:
+        return True
+    return True
+
+
 def get_fabric_interface():
     '''
     Returns the fabric interface.
