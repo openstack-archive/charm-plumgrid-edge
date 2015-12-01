@@ -9,7 +9,6 @@ _map = utils.restart_map
 
 utils.register_configs = MagicMock()
 utils.restart_map = MagicMock()
-
 import pg_dir_hooks as hooks
 
 utils.register_configs = _reg
@@ -61,22 +60,8 @@ class PGDirHooksTests(CharmTestCase):
         self.add_lcm_key.assert_called_with()
 
     def test_config_changed_hook(self):
-        _pkgs = ['plumgrid-lxc', 'iovisor-dkms']
-        self.add_lcm_key.return_value = 0
-        self.post_pg_license.return_value = 0
-        self.determine_packages.return_value = [_pkgs]
+        self.add_lcm_key.return_value = 1
         self._call_hook('config-changed')
-        self.stop_pg.assert_called_with()
-        self.configure_sources.assert_called_with(update=True)
-        self.apt_install.assert_has_calls([
-            call(_pkgs, fatal=True,
-                 options=['--force-yes']),
-        ])
-        self.load_iovisor.assert_called_with()
-        self.ensure_mtu.assert_called_with()
-
-        self.CONFIGS.write_all.assert_called_with()
-        self.restart_pg.assert_called_with()
 
     def test_start(self):
         self._call_hook('start')
