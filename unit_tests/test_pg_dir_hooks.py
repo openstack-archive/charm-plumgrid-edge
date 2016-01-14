@@ -57,7 +57,6 @@ class PGDirHooksTests(CharmTestCase):
         ])
         self.load_iovisor.assert_called_with()
         self.ensure_mtu.assert_called_with()
-        self.add_lcm_key.assert_called_with()
 
     def test_config_changed_hook(self):
         self.add_lcm_key.return_value = 1

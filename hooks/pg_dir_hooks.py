@@ -48,7 +48,7 @@ def install():
         apt_install(pkg, options=['--force-yes'], fatal=True)
     load_iovisor()
     ensure_mtu()
-    add_lcm_key()
+    CONFIGS.write_all()
 
 
 @hooks.hook('director-relation-joined')
