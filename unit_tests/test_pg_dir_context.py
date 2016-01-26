@@ -86,7 +86,7 @@ class PGDirContextTest(CharmTestCase):
             'neutron_security_groups': None,
             'neutron_url': 'https://None:9696',
             'virtual_ip': '192.168.100.250',
-            'pg_hostname': 'pg-director',
+            'pg_hostname': 'node0',
             'interface': 'juju-br0',
             'fabric_interface': 'juju-br0',
             'label': 'node0',
