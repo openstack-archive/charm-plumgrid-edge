@@ -327,8 +327,7 @@ def post_pg_license():
         'plumgrid:plumgrid',
         LICENSE_POST_PATH,
         '-d',
-        json.dumps(license)
-        ]
+        json.dumps(license)]
     licence_get_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_GET_PATH]
     try:
         old_license = subprocess.check_output(licence_get_cmd)
