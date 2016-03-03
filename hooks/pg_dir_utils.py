@@ -7,6 +7,18 @@ from copy import deepcopy
 from charmhelpers.core.hookenv import (
     log,
     config,
+    unit_get,
+)
+from charmhelpers.contrib.network.ip import (
+    get_iface_from_addr,
+    get_bridges,
+    get_bridge_nics,
+    is_ip,
+    is_address_in_network,
+    get_iface_addr
+)
+from charmhelpers.fetch import (
+    apt_cache
 )
 from charmhelpers.contrib.openstack import templating
 from charmhelpers.core.host import set_nic_mtu
@@ -19,11 +31,11 @@ from charmhelpers.core.host import (
     service_start,
     service_stop,
 )
+from socket import gethostname as get_unit_hostname
 import pg_dir_context
 import subprocess
 import time
 import os
-import re
 import json
 
 LXC_CONF = '/etc/libvirt/lxc.conf'
@@ -74,7 +86,25 @@ def determine_packages():
     Returns list of packages required by PLUMgrid director as specified
     in the neutron_plugins dictionary in charmhelpers.
     '''
-    return neutron_plugin_attribute('plumgrid', 'packages', 'neutron')
+    pkgs = []
+    tag = 'latest'
+    for pkg in neutron_plugin_attribute('plumgrid', 'packages', 'neutron'):
+        if 'plumgrid' in pkg:
+            tag = config('plumgrid-build')
+        elif pkg == 'iovisor-dkms':
+            tag = config('iovisor-build')
+
+        if tag == 'latest':
+            pkgs.append(pkg)
+        else:
+            if tag in [i.ver_str for i in apt_cache()[pkg].version_list]:
+                pkgs.append('%s=%s' % (pkg, tag))
+            else:
+                error_msg = \
+                    "Build version '%s' for package '%s' not available" \
+                    % (tag, pkg)
+                raise ValueError(error_msg)
+    return pkgs
 
 
 def register_configs(release=None):
@@ -139,38 +169,94 @@ def remove_iovisor():
     '''
     _exec_cmd(cmd=['rmmod', 'iovisor'],
               error_msg='Error Loading IOVisor Kernel Module')
+    time.sleep(1)
 
 
-def check_interface_type():
+def interface_exists(interface):
     '''
-    Checks the interface. Support added for AWS deployments. There are 2
-    possible interfaces "juju-br0" and "eth0". The default being juju-br0
+    Checks if interface exists on node.
     '''
-    log("Checking Interface Type")
-    default_interface = "juju-br0"
-    AWS_interface = "eth0"
-    shell_output = subprocess.check_output(['brctl', 'show', 'juju-br0'])
-    output = re.split(' |\n|\t', shell_output)
-    if output[10] == '':
-        return AWS_interface
+    try:
+        subprocess.check_call(['ip', 'link', 'show', interface],
+                              stdout=open(os.devnull, 'w'),
+                              stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        return False
+    return True
+
+
+def get_mgmt_interface():
+    '''
+    Returns the managment interface.
+    '''
+    mgmt_interface = config('mgmt-interface')
+    if interface_exists(mgmt_interface):
+        return mgmt_interface
     else:
-        return default_interface
+        log('Provided managment interface %s does not exist'
+            % mgmt_interface)
+        return get_iface_from_addr(unit_get('private-address'))
+
+
+def fabric_interface_changed():
+    '''
+    Returns true if interface for node changed.
+    '''
+    fabric_interface = get_fabric_interface()
+    try:
+        with open(PG_IFCS_CONF, 'r') as ifcs:
+            for line in ifcs:
+                if 'fabric_core' in line:
+                    if line.split()[0] == fabric_interface:
+                        return False
+    except IOError:
+        return True
+    return True
+
+
+def get_fabric_interface():
+    '''
+    Returns the fabric interface.
+    '''
+    fabric_interfaces = config('fabric-interfaces')
+    if fabric_interfaces == 'MANAGEMENT':
+        return get_mgmt_interface()
+    else:
+        try:
+            all_fabric_interfaces = json.loads(fabric_interfaces)
+        except ValueError:
+            raise ValueError('Invalid json provided for fabric interfaces')
+        hostname = get_unit_hostname()
+        if hostname in all_fabric_interfaces:
+            node_fabric_interface = all_fabric_interfaces[hostname]
+        elif 'DEFAULT' in all_fabric_interfaces:
+            node_fabric_interface = all_fabric_interfaces['DEFAULT']
+        else:
+            raise ValueError('No fabric interface provided for node')
+        if interface_exists(node_fabric_interface):
+            if is_address_in_network(config('os-data-network'),
+                                     get_iface_addr(node_fabric_interface)[0]):
+                return node_fabric_interface
+            else:
+                raise ValueError('Fabric interface not in fabric network')
+        else:
+            log('Provided fabric interface %s does not exist'
+                % node_fabric_interface)
+            raise ValueError('Provided fabric interface does not exist')
+        return node_fabric_interface
 
 
 def ensure_mtu():
     '''
     Ensures required MTU of the underlying networking of the node.
     '''
-    log("Changing MTU of juju-br0 and all attached interfaces")
     interface_mtu = config('network-device-mtu')
-    interface_type = check_interface_type()
-    if interface_type == "juju-br0":
-        cmd = subprocess.check_output(["brctl", "show", interface_type])
-        words = cmd.split()
-        for word in words:
-            if 'eth' in word:
-                set_nic_mtu(word, interface_mtu)
-    set_nic_mtu(interface_type, interface_mtu)
+    fabric_interface = get_fabric_interface()
+    if fabric_interface in get_bridges():
+        attached_interfaces = get_bridge_nics(fabric_interface)
+        for interface in attached_interfaces:
+            set_nic_mtu(interface, interface_mtu)
+    set_nic_mtu(fabric_interface, interface_mtu)
 
 
 def _exec_cmd(cmd=None, error_msg='Command exited with ERRORs', fatal=False):
@@ -229,6 +315,8 @@ def post_pg_license():
         log('PLUMgrid License Key not specified')
         return 0
     PG_VIP = config('plumgrid-virtual-ip')
+    if not is_ip(PG_VIP):
+        raise ValueError('Invalid IP Provided')
     LICENSE_POST_PATH = 'https://%s/0/tenant_manager/license_key' % PG_VIP
     LICENSE_GET_PATH = 'https://%s/0/tenant_manager/licenses' % PG_VIP
     PG_CURL = '%s/opt/pg/scripts/pg_curl.sh' % PG_LXC_PATH
@@ -239,8 +327,7 @@ def post_pg_license():
         'plumgrid:plumgrid',
         LICENSE_POST_PATH,
         '-d',
-        json.dumps(license)
-        ]
+        json.dumps(license)]
     licence_get_cmd = [PG_CURL, '-u', 'plumgrid:plumgrid', LICENSE_GET_PATH]
     try:
         old_license = subprocess.check_output(licence_get_cmd)

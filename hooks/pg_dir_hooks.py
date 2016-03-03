@@ -30,6 +30,7 @@ from pg_dir_utils import (
     ensure_mtu,
     add_lcm_key,
     post_pg_license,
+    fabric_interface_changed
 )
 
 hooks = Hooks()
@@ -47,7 +48,7 @@ def install():
         apt_install(pkg, options=['--force-yes'], fatal=True)
     load_iovisor()
     ensure_mtu()
-    add_lcm_key()
+    CONFIGS.write_all()
 
 
 @hooks.hook('director-relation-joined')
@@ -65,17 +66,28 @@ def config_changed():
     This hook is run when a config parameter is changed.
     It also runs on node reboot.
     '''
-    if post_pg_license():
-        log("PLUMgrid License Posted")
-        return 1
     if add_lcm_key():
         log("PLUMgrid LCM Key added")
         return 1
+    charm_config = config()
+    if charm_config.changed('plumgrid-license-key'):
+        if post_pg_license():
+            log("PLUMgrid License Posted")
+        return 1
+    if charm_config.changed('fabric-interfaces'):
+        if not fabric_interface_changed():
+            log("Fabric interface already set")
+            return 1
+    if charm_config.changed('os-data-network'):
+        if charm_config['fabric-interfaces'] == 'MANAGEMENT':
+            log('Fabric running on managment network')
+            return 1
     stop_pg()
     configure_sources(update=True)
     pkgs = determine_packages()
     for pkg in pkgs:
         apt_install(pkg, options=['--force-yes'], fatal=True)
+    remove_iovisor()
     load_iovisor()
     ensure_mtu()
     add_lcm_key()

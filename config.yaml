@@ -7,6 +7,28 @@ options:
     default: 'null'
     type: string
     description: Public SSH key of PLUMgrid LCM which is running PG-Tools.
+  mgmt-interface:
+    type: string
+    default: 'juju-br0'
+    description: The interface connected to PLUMgrid Managment network.
+  os-data-network:
+    type: string
+    default:
+    description: |
+      The IP address and netmask of the OpenStack Data network (e.g.,
+      192.168.0.0/24)
+      .
+      This network will be used for tenant network traffic in overlay
+      networks.
+  fabric-interfaces:
+    default: 'MANAGEMENT'
+    type: string
+    description: |
+       Interfaces that will provide fabric connectivity on the director nodes.
+       Provided in form of json in a string. These interfaces have to be connected 
+       to the os-data-network specified in the config. Default value is MANAGEMENT which
+       will configure the management interface as the fabric interface on each
+       director.
   network-device-mtu:
     type: string
     default: '1580'
@@ -19,6 +41,16 @@ options:
     default: null
     type: string
     description: Provide the respective keys of the install sources.
+  plumgrid-build:
+    default: 'latest'
+    type: string
+    description: |
+       Provide the build version of PLUMgrid packages that needs to be installed
+  iovisor-build:
+    default: 'latest'
+    type: string
+    description: |
+       Provide the build version of iovisor package that needs to be installed
   plumgrid-license-key:
     default: null
     type: string

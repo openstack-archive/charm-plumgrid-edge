@@ -45,12 +45,13 @@ class PGDirContextTest(CharmTestCase):
                   'neutron_plugin_attribute')
     @patch.object(charmhelpers.contrib.openstack.context, 'unit_private_ip')
     @patch.object(context, '_pg_dir_ips')
-    @patch.object(utils, 'check_interface_type')
-    def test_neutroncc_context_api_rel(self, _int_type, _pg_dir_ips,
-                                       _unit_priv_ip, _npa, _ens_pkgs,
-                                       _save_ff, _https, _is_clus,
-                                       _unit_get, _config, _runits, _rids,
-                                       _rget):
+    @patch.object(utils, 'get_mgmt_interface')
+    @patch.object(utils, 'get_fabric_interface')
+    def test_neutroncc_context_api_rel(self, _fabric_int, _mgmt_int,
+                                       _pg_dir_ips, _unit_priv_ip, _npa,
+                                       _ens_pkgs, _save_ff, _https,
+                                       _is_clus, _unit_get, _config,
+                                       _runits, _rids, _rget):
         def mock_npa(plugin, section, manager):
             if section == "driver":
                 return "neutron.randomdriver"
@@ -73,7 +74,8 @@ class PGDirContextTest(CharmTestCase):
         self.get_unit_hostname.return_value = 'node0'
         self.get_host_ip.return_value = '192.168.100.201'
         _pg_dir_ips.return_value = ['192.168.100.202', '192.168.100.203']
-        _int_type.return_value = 'juju-br0'
+        _mgmt_int.return_value = 'juju-br0'
+        _fabric_int.return_value = 'juju-br0'
         napi_ctxt = context.PGDirContext()
         expect = {
             'config': 'neutron.randomconfig',
@@ -84,8 +86,9 @@ class PGDirContextTest(CharmTestCase):
             'neutron_security_groups': None,
             'neutron_url': 'https://None:9696',
             'virtual_ip': '192.168.100.250',
-            'pg_hostname': 'pg-director',
+            'pg_hostname': 'node0',
             'interface': 'juju-br0',
+            'fabric_interface': 'juju-br0',
             'label': 'node0',
             'fabric_mode': 'host',
             'virtual_router_id': '250',
