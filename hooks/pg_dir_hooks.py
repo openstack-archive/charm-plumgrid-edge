@@ -14,6 +14,8 @@ from charmhelpers.core.hookenv import (
     config,
 )
 
+from charmhelpers.contrib.network.ip import is_ip
+
 from charmhelpers.fetch import (
     apt_install,
     apt_purge,
@@ -66,33 +68,51 @@ def config_changed():
     This hook is run when a config parameter is changed.
     It also runs on node reboot.
     '''
-    if add_lcm_key():
-        log("PLUMgrid LCM Key added")
-        return 1
     charm_config = config()
+    log('Total number of configs %s ' % len(charm_config))
+    if charm_config.changed('lcm-ssh-key'):
+        if add_lcm_key():
+            CONFIGS.write_all()
+            log("PLUMgrid LCM Key added")
+        return 1
     if charm_config.changed('plumgrid-license-key'):
         if post_pg_license():
+            CONFIGS.write_all()
             log("PLUMgrid License Posted")
         return 1
+    if charm_config.changed('network-device-mtu'):
+        CONFIGS.write_all()
+        ensure_mtu()
+        return 1
+    stop_pg()
+    if charm_config.changed('plumgrid-virtual-ip'):
+        if not is_ip(charm_config['plumgrid-virtual-ip']):
+            raise ValueError('Invalid IP Provided')
     if charm_config.changed('fabric-interfaces'):
         if not fabric_interface_changed():
             log("Fabric interface already set")
-            return 1
     if charm_config.changed('os-data-network'):
         if charm_config['fabric-interfaces'] == 'MANAGEMENT':
             log('Fabric running on managment network')
-            return 1
-    stop_pg()
-    configure_sources(update=True)
-    pkgs = determine_packages()
-    for pkg in pkgs:
-        apt_install(pkg, options=['--force-yes'], fatal=True)
-    remove_iovisor()
-    load_iovisor()
-    ensure_mtu()
-    add_lcm_key()
+    if (charm_config.changed('install_sources') or
+        charm_config.changed('plumgrid-build') or
+            charm_config.changed('iovisor-build')):
+        configure_sources(update=True)
+        pkgs = determine_packages()
+        log('Packages to upgrade: %s' % len(pkgs))
+        for pkg in pkgs:
+            if charm_config.changed('install_sources'):
+                log("install_sources changed!")
+            if charm_config.changed('plumgrid-build'):
+                log("plumgrid-build changed!")
+            if charm_config.changed('iovisor-build'):
+                log("iovisor-build changed!")
+            apt_install(pkg, options=['--force-yes'], fatal=True)
+            remove_iovisor()
+            load_iovisor()
     CONFIGS.write_all()
     restart_pg()
+    return 1
 
 
 @hooks.hook('start')
