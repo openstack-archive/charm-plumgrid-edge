@@ -71,6 +71,7 @@ class PGDirContext(context.NeutronContext):
         pg_dir_ips = _pg_dir_ips()
         pg_dir_ips.append(str(get_address_in_network(network=None,
                           fallback=get_host_ip(unit_get('private-address')))))
+        pg_dir_ips = sorted(pg_dir_ips)
         pg_ctxt['director_ips'] = pg_dir_ips
         pg_dir_ips_string = ''
         single_ip = True
