@@ -69,22 +69,26 @@ def config_changed():
     It also runs on node reboot.
     '''
     charm_config = config()
-    log('Total number of configs %s ' % len(charm_config))
+    count = 0
+    for key in charm_config:
+        if charm_config.changed(key):
+            count += 1
     if charm_config.changed('lcm-ssh-key'):
         if add_lcm_key():
-            CONFIGS.write_all()
+            count -= 1
             log("PLUMgrid LCM Key added")
-        return 1
     if charm_config.changed('plumgrid-license-key'):
         if post_pg_license():
-            CONFIGS.write_all()
+            count -= 1
             log("PLUMgrid License Posted")
-        return 1
     if charm_config.changed('network-device-mtu'):
-        CONFIGS.write_all()
+        count -= 1
         ensure_mtu()
+    if count > 0:
+        stop_pg()
+    else:
+        CONFIGS.write_all()
         return 1
-    stop_pg()
     if charm_config.changed('plumgrid-virtual-ip'):
         if not is_ip(charm_config['plumgrid-virtual-ip']):
             raise ValueError('Invalid IP Provided')
@@ -99,20 +103,12 @@ def config_changed():
             charm_config.changed('iovisor-build')):
         configure_sources(update=True)
         pkgs = determine_packages()
-        log('Packages to upgrade: %s' % len(pkgs))
         for pkg in pkgs:
-            if charm_config.changed('install_sources'):
-                log("install_sources changed!")
-            if charm_config.changed('plumgrid-build'):
-                log("plumgrid-build changed!")
-            if charm_config.changed('iovisor-build'):
-                log("iovisor-build changed!")
             apt_install(pkg, options=['--force-yes'], fatal=True)
             remove_iovisor()
             load_iovisor()
     CONFIGS.write_all()
     restart_pg()
-    return 1
 
 
 @hooks.hook('start')
