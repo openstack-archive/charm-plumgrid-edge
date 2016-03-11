@@ -92,9 +92,9 @@ class PGDirContextTest(CharmTestCase):
             'label': 'node0',
             'fabric_mode': 'host',
             'virtual_router_id': '250',
-            'director_ips': ['192.168.100.202', '192.168.100.203',
-                             '192.168.100.201'],
+            'director_ips': ['192.168.100.201', '192.168.100.202',
+                             '192.168.100.203'],
             'director_ips_string':
-            '192.168.100.202,192.168.100.203,192.168.100.201',
+            '192.168.100.201,192.168.100.202,192.168.100.203',
         }
         self.assertEquals(expect, napi_ctxt())
