@@ -5,6 +5,9 @@
 # The hooks of this charm have been symlinked to functions
 # in this file.
 
+import sys
+import time
+
 from charmhelpers.core.hookenv import (
     Hooks,
     UnregisteredHookError,
@@ -31,9 +34,6 @@ from pg_dir_utils import (
     fabric_interface_changed,
     load_iptables
 )
-
-import sys
-import time
 
 hooks = Hooks()
 CONFIGS = register_configs()

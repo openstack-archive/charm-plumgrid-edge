@@ -7,13 +7,13 @@ import subprocess
 import time
 import os
 import json
-from charmhelpers.contrib.openstack.neutron import neutron_plugin_attribute
+from collections import OrderedDict
+from socket import gethostname as get_unit_hostname
 from copy import deepcopy
+from charmhelpers.contrib.openstack.neutron import neutron_plugin_attribute
 from charmhelpers.contrib.openstack import templating
 from charmhelpers.core.host import set_nic_mtu
-from collections import OrderedDict
 from charmhelpers.contrib.storage.linux.ceph import modprobe
-from socket import gethostname as get_unit_hostname
 from charmhelpers.core.hookenv import (
     log,
     config,
@@ -27,16 +27,16 @@ from charmhelpers.contrib.network.ip import (
     is_address_in_network,
     get_iface_addr
 )
+from charmhelpers.core.host import (
+    service_start,
+    service_stop,
+)
 from charmhelpers.fetch import (
     apt_cache,
     apt_install
 )
 from charmhelpers.contrib.openstack.utils import (
     os_release,
-)
-from charmhelpers.core.host import (
-    service_start,
-    service_stop,
 )
 
 LXC_CONF = '/etc/libvirt/lxc.conf'
@@ -140,8 +140,7 @@ def restart_pg():
     '''
     Stops and Starts PLUMgrid service after flushing iptables.
     '''
-    service_stop('plumgrid')
-    time.sleep(2)
+    stop_pg()
     service_start('plumgrid')
     time.sleep(5)
 
@@ -166,7 +165,7 @@ def remove_iovisor():
     Removes iovisor kernel module.
     '''
     _exec_cmd(cmd=['rmmod', 'iovisor'],
-              error_msg='Error Loading IOVisor Kernel Module')
+              error_msg='Error Removing IOVisor Kernel Module')
     time.sleep(1)
 
 
