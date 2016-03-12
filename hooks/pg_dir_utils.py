@@ -30,6 +30,7 @@ from charmhelpers.contrib.openstack.utils import (
 from charmhelpers.core.host import (
     service_start,
     service_stop,
+    service_available,
 )
 from socket import gethostname as get_unit_hostname
 import pg_dir_context
@@ -141,6 +142,15 @@ def restart_pg():
     '''
     Stops and Starts PLUMgrid service after flushing iptables.
     '''
+    if not service_available('plumgrid'):
+        if service_available('libvirt-bin'):
+            if not service_start('libvirt-bin'):
+                raise ValueError("libvirt-bin service couldn't be started")
+            else:
+                time.sleep(5)
+        else:
+            log("libvirt-bin not installed")
+            return 0
     service_stop('plumgrid')
     time.sleep(2)
     _exec_cmd(cmd=['iptables', '-F'])
