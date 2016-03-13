@@ -3,6 +3,10 @@
 # This file contains the class that generates context
 # for PLUMgrid template files.
 
+import re
+from charmhelpers.contrib.openstack import context
+from charmhelpers.contrib.openstack.utils import get_host_ip
+from charmhelpers.contrib.network.ip import get_address_in_network
 from charmhelpers.core.hookenv import (
     config,
     unit_get,
@@ -12,12 +16,10 @@ from charmhelpers.core.hookenv import (
     related_units,
     relation_get,
 )
-from charmhelpers.contrib.openstack import context
-from charmhelpers.contrib.openstack.utils import get_host_ip
-from charmhelpers.contrib.network.ip import get_address_in_network
-
-import re
-from socket import gethostname as get_unit_hostname
+from socket import (
+    gethostname,
+    getfqdn
+)
 
 
 def _pg_dir_ips():
@@ -71,6 +73,7 @@ class PGDirContext(context.NeutronContext):
         pg_dir_ips = _pg_dir_ips()
         pg_dir_ips.append(str(get_address_in_network(network=None,
                           fallback=get_host_ip(unit_get('private-address')))))
+        pg_dir_ips = sorted(pg_dir_ips)
         pg_ctxt['director_ips'] = pg_dir_ips
         pg_dir_ips_string = ''
         single_ip = True
@@ -82,10 +85,13 @@ class PGDirContext(context.NeutronContext):
                 pg_dir_ips_string = pg_dir_ips_string + ',' + str(ip)
         pg_ctxt['director_ips_string'] = pg_dir_ips_string
         pg_ctxt['virtual_ip'] = conf['plumgrid-virtual-ip']
-        pg_ctxt['pg_hostname'] = "pg-director"
-        from pg_dir_utils import get_mgmt_interface
+        unit_hostname = gethostname()
+        pg_ctxt['pg_hostname'] = unit_hostname
+        pg_ctxt['pg_fqdn'] = getfqdn()
+        from pg_dir_utils import get_mgmt_interface, get_fabric_interface
         pg_ctxt['interface'] = get_mgmt_interface()
-        pg_ctxt['label'] = get_unit_hostname()
+        pg_ctxt['fabric_interface'] = get_fabric_interface()
+        pg_ctxt['label'] = unit_hostname
         pg_ctxt['fabric_mode'] = 'host'
         virtual_ip_array = re.split('\.', conf['plumgrid-virtual-ip'])
         pg_ctxt['virtual_router_id'] = virtual_ip_array[3]
