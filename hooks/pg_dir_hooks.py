@@ -118,6 +118,7 @@ def upgrade_charm():
     This hook is run when the charm is upgraded
     '''
     load_iptables()
+    CONFIGS.write_all()
 
 
 @hooks.hook('stop')
