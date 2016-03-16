@@ -99,7 +99,7 @@ def config_changed():
             load_iovisor()
     CONFIGS.write_all()
     # Starting the plumgrid service if it is stopped by
-    # any of the config-parameters
+    # any of the config-parameters or node reboot
     if not service_running('plumgrid'):
         restart_pg()
 
