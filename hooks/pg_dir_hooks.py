@@ -7,6 +7,7 @@
 
 import sys
 import time
+from charmhelpers.core.host import service_running
 
 from charmhelpers.core.hookenv import (
     Hooks,
@@ -20,8 +21,6 @@ from charmhelpers.fetch import (
     apt_purge,
     configure_sources,
 )
-
-from charmhelpers.core.host import service_running
 
 from pg_dir_utils import (
     register_configs,
@@ -78,15 +77,13 @@ def config_changed():
     if charm_config.changed('plumgrid-license-key'):
         if post_pg_license():
             log("PLUMgrid License Posted")
-    if charm_config.changed('network-device-mtu'):
-        ensure_mtu()
     if charm_config.changed('fabric-interfaces'):
         if not fabric_interface_changed():
             log("Fabric interface already set")
         else:
-            ensure_mtu()
             stop_pg()
     if charm_config.changed('plumgrid-virtual-ip'):
+        CONFIGS.write_all()
         stop_pg()
     if (charm_config.changed('install_sources') or
         charm_config.changed('plumgrid-build') or
@@ -99,6 +96,7 @@ def config_changed():
             apt_install(pkg, options=['--force-yes'], fatal=True)
             remove_iovisor()
             load_iovisor()
+    ensure_mtu()
     CONFIGS.write_all()
     if not service_running('plumgrid'):
         restart_pg()
