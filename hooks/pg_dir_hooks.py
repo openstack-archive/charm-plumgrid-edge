@@ -20,7 +20,6 @@ from charmhelpers.fetch import (
     configure_sources,
 )
 
-from charmhelpers.contrib.network.ip import is_ip
 from charmhelpers.core.host import service_running
 
 from pg_dir_utils import (
@@ -82,16 +81,10 @@ def config_changed():
         if not fabric_interface_changed():
             log("Fabric interface already set")
         else:
+            ensure_mtu()
             stop_pg()
-    if charm_config.changed('os-data-network'):
-        if charm_config['fabric-interfaces'] == 'MANAGEMENT':
-            log('Fabric running on managment network')
     if charm_config.changed('plumgrid-virtual-ip'):
-        plumgrid_vip = config('plumgrid-virtual-ip')
-        if is_ip(plumgrid_vip):
-            stop_pg()
-        else:
-            raise ValueError('Invalid IP Provided')
+        stop_pg()
     if (charm_config.changed('install_sources') or
         charm_config.changed('plumgrid-build') or
         charm_config.changed('install_keys') or
@@ -104,8 +97,6 @@ def config_changed():
             remove_iovisor()
             load_iovisor()
     CONFIGS.write_all()
-    # Starting the plumgrid service if it is stopped by
-    # any of the config-parameters or node reboot
     if not service_running('plumgrid'):
         restart_pg()
 

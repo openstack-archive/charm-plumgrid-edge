@@ -12,6 +12,7 @@ from charmhelpers.core.hookenv import (
     related_units,
     relation_get,
 )
+from charmhelpers.contrib.network.ip import is_ip
 from charmhelpers.contrib.openstack import context
 from charmhelpers.contrib.openstack.utils import get_host_ip
 from charmhelpers.contrib.network.ip import get_address_in_network
@@ -81,7 +82,11 @@ class PGDirContext(context.NeutronContext):
             else:
                 pg_dir_ips_string = pg_dir_ips_string + ',' + str(ip)
         pg_ctxt['director_ips_string'] = pg_dir_ips_string
-        pg_ctxt['virtual_ip'] = conf['plumgrid-virtual-ip']
+        PG_VIP = config('plumgrid-virtual-ip')
+        if is_ip(PG_VIP):
+            pg_ctxt['virtual_ip'] = conf['plumgrid-virtual-ip']
+        else:
+            raise ValueError('Invalid IP Provided')
         unit_hostname = get_unit_hostname()
         pg_ctxt['pg_hostname'] = unit_hostname
         from pg_dir_utils import get_mgmt_interface, get_fabric_interface
