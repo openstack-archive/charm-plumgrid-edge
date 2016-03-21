@@ -7,6 +7,7 @@
 
 import sys
 import time
+
 from charmhelpers.core.hookenv import (
     Hooks,
     UnregisteredHookError,
@@ -32,7 +33,8 @@ from pg_dir_utils import (
     ensure_mtu,
     add_lcm_key,
     post_pg_license,
-    fabric_interface_changed
+    fabric_interface_changed,
+    load_iptables
 )
 
 hooks = Hooks()
@@ -44,6 +46,7 @@ def install():
     '''
     Install hook is run when the charm is first deployed on a node.
     '''
+    load_iptables()
     configure_sources(update=True)
     pkgs = determine_packages()
     for pkg in pkgs:
@@ -113,6 +116,15 @@ def start():
                 break
             count = count + 1
             time.sleep(15)
+
+
+@hooks.hook('upgrade-charm')
+def upgrade_charm():
+    '''
+    This hook is run when the charm is upgraded
+    '''
+    load_iptables()
+    CONFIGS.write_all()
 
 
 @hooks.hook('stop')

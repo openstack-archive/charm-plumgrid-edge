@@ -1,5 +1,7 @@
 from mock import MagicMock, patch, call
+
 from test_utils import CharmTestCase
+
 with patch('charmhelpers.core.hookenv.config') as config:
     config.return_value = 'neutron'
     import pg_dir_utils as utils
@@ -9,6 +11,7 @@ _map = utils.restart_map
 
 utils.register_configs = MagicMock()
 utils.restart_map = MagicMock()
+
 import pg_dir_hooks as hooks
 
 utils.register_configs = _reg
@@ -28,7 +31,8 @@ TO_PATCH = [
     'add_lcm_key',
     'determine_packages',
     'post_pg_license',
-    'config'
+    'config',
+    'load_iptables'
 ]
 NEUTRON_CONF_DIR = "/etc/neutron"
 

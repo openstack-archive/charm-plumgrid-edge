@@ -8,7 +8,8 @@ TO_PATCH = [
     'config',
     'unit_get',
     'get_host_ip',
-    'get_unit_hostname',
+    'gethostname',
+    'getfqdn'
 ]
 
 
@@ -71,7 +72,8 @@ class PGDirContextTest(CharmTestCase):
         _npa.side_effect = mock_npa
         _unit_get.return_value = '192.168.100.201'
         _unit_priv_ip.return_value = '192.168.100.201'
-        self.get_unit_hostname.return_value = 'node0'
+        self.gethostname.return_value = 'node0'
+        self.getfqdn.return_value = 'node0.maas'
         self.get_host_ip.return_value = '192.168.100.201'
         _pg_dir_ips.return_value = ['192.168.100.202', '192.168.100.203']
         _mgmt_int.return_value = 'juju-br0'
@@ -87,14 +89,15 @@ class PGDirContextTest(CharmTestCase):
             'neutron_url': 'https://None:9696',
             'virtual_ip': '192.168.100.250',
             'pg_hostname': 'node0',
+            'pg_fqdn': 'node0.maas',
             'interface': 'juju-br0',
             'fabric_interface': 'juju-br0',
             'label': 'node0',
             'fabric_mode': 'host',
             'virtual_router_id': '250',
-            'director_ips': ['192.168.100.202', '192.168.100.203',
-                             '192.168.100.201'],
+            'director_ips': ['192.168.100.201', '192.168.100.202',
+                             '192.168.100.203'],
             'director_ips_string':
-            '192.168.100.202,192.168.100.203,192.168.100.201',
+            '192.168.100.201,192.168.100.202,192.168.100.203',
         }
         self.assertEquals(expect, napi_ctxt())
