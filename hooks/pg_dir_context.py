@@ -95,5 +95,6 @@ class PGDirContext(context.NeutronContext):
         pg_ctxt['fabric_mode'] = 'host'
         virtual_ip_array = re.split('\.', conf['plumgrid-virtual-ip'])
         pg_ctxt['virtual_router_id'] = virtual_ip_array[3]
+        pg_ctxt['opsvm_ip'] = conf['opsvm-ip']
 
         return pg_ctxt

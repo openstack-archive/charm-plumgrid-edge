@@ -7,6 +7,7 @@
 
 import sys
 import time
+from charmhelpers.contrib.network.ip import is_ip
 
 from charmhelpers.core.hookenv import (
     Hooks,
@@ -63,6 +64,23 @@ def dir_joined():
     restart_pg()
 
 
+@hooks.hook('plumgrid-relation-joined')
+def plumgrid_joined(relation_id=None):
+    '''
+    This hook is run when relation with edge or gateway is created.
+    '''
+    opsvm_ip = onfig('opsvm-ip')
+    if opsvm_ip == '127.0.0.1':
+        return 1
+    elif not is_ip(opsvm-ip):
+        raise ValueError('Incorrect IP specified')
+    else:
+        relation_set(relation_id=relation_id, opsvm_ip=opsvm_ip})
+    #rel_data = {
+    #    'opsvm-ip': opsvm-ip,
+    #}
+
+
 @hooks.hook('config-changed')
 def config_changed():
     '''
@@ -92,6 +110,8 @@ def config_changed():
         apt_install(pkg, options=['--force-yes'], fatal=True)
     remove_iovisor()
     load_iovisor()
+    for rid in relation_ids('plumgrid'):
+        neutron_plugin_joined(rid)
     ensure_mtu()
     add_lcm_key()
     CONFIGS.write_all()
