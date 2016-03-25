@@ -50,6 +50,7 @@ PG_DEF_CONF = '%s/conf/pg/nginx.conf' % PG_LXC_DATA_PATH
 PG_HN_CONF = '%s/conf/etc/hostname' % PG_LXC_DATA_PATH
 PG_HS_CONF = '%s/conf/etc/hosts' % PG_LXC_DATA_PATH
 PG_IFCS_CONF = '%s/conf/pg/ifcs.conf' % PG_LXC_DATA_PATH
+OPS_CONF = '%s/conf/etc/00-pg.conf' % PG_LXC_DATA_PATH
 AUTH_KEY_PATH = '%s/root/.ssh/authorized_keys' % PG_LXC_DATA_PATH
 TEMP_LICENSE_FILE = '/tmp/license'
 
@@ -71,6 +72,10 @@ BASE_RESOURCE_MAP = OrderedDict([
         'contexts': [pg_dir_context.PGDirContext()],
     }),
     (PG_HS_CONF, {
+        'services': ['plumgrid'],
+        'contexts': [pg_dir_context.PGDirContext()],
+    }),
+    (OPS_CONF, {
         'services': ['plumgrid'],
         'contexts': [pg_dir_context.PGDirContext()],
     }),
