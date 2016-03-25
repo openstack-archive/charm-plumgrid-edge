@@ -8,12 +8,15 @@
 import sys
 import time
 from charmhelpers.core.host import service_running
+from charmhelpers.contrib.network.ip import is_ip
 
 from charmhelpers.core.hookenv import (
     Hooks,
     UnregisteredHookError,
     log,
     config,
+    relation_set,
+    relation_ids
 )
 
 from charmhelpers.fetch import (
@@ -64,6 +67,20 @@ def dir_joined():
     restart_pg()
 
 
+@hooks.hook('plumgrid-relation-joined')
+def plumgrid_joined(relation_id=None):
+    '''
+    This hook is run when relation with edge or gateway is created.
+    '''
+    opsvm_ip = config('opsvm-ip')
+    if opsvm_ip == '127.0.0.1':
+        return 1
+    elif not is_ip(opsvm_ip):
+        raise ValueError('Incorrect IP specified')
+    else:
+        relation_set(relation_id=relation_id, opsvm_ip=opsvm_ip)
+
+
 @hooks.hook('config-changed')
 def config_changed():
     '''
@@ -96,6 +113,10 @@ def config_changed():
             apt_install(pkg, options=['--force-yes'], fatal=True)
             remove_iovisor()
             load_iovisor()
+    if charm_config.changed('opsvm-ip'):
+        for rid in relation_ids('plumgrid'):
+            plumgrid_joined(rid)
+        stop_pg()
     ensure_mtu()
     CONFIGS.write_all()
     if not service_running('plumgrid'):
@@ -121,8 +142,9 @@ def upgrade_charm():
     '''
     This hook is run when the charm is upgraded
     '''
-    load_iptables()
+    ensure_mtu()
     CONFIGS.write_all()
+    restart_pg()
 
 
 @hooks.hook('stop')
