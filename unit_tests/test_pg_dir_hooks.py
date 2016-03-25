@@ -62,10 +62,6 @@ class PGDirHooksTests(CharmTestCase):
         self.load_iovisor.assert_called_with()
         self.ensure_mtu.assert_called_with()
 
-    def test_config_changed_hook(self):
-        self.add_lcm_key.return_value = 1
-        self._call_hook('config-changed')
-
     def test_start(self):
         self._call_hook('start')
         self.test_config.set('plumgrid-license-key', None)
