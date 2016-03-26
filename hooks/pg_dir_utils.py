@@ -12,7 +12,6 @@ from socket import gethostname as get_unit_hostname
 from copy import deepcopy
 from charmhelpers.contrib.openstack.neutron import neutron_plugin_attribute
 from charmhelpers.contrib.openstack import templating
-from charmhelpers.core.host import set_nic_mtu
 from charmhelpers.contrib.storage.linux.ceph import modprobe
 from charmhelpers.core.hookenv import (
     log,
@@ -30,7 +29,9 @@ from charmhelpers.contrib.network.ip import (
 from charmhelpers.core.host import (
     service_start,
     service_stop,
-    service_running
+    service_running,
+    path_hash,
+    set_nic_mtu
 )
 from charmhelpers.fetch import (
     apt_cache,
@@ -406,3 +407,19 @@ def get_cidr_from_iface(interface):
             return None
     else:
         return None
+
+
+def restart_on_change(restart_map):
+    """
+    Restart services based on configuration files changing
+    """
+    def wrap(f):
+        def wrapped_f(*args, **kwargs):
+            checksums = {path: path_hash(path) for path in restart_map}
+            f(*args, **kwargs)
+            for path in restart_map:
+                if path_hash(path) != checksums[path]:
+                    restart_pg()
+                    break
+        return wrapped_f
+    return wrap

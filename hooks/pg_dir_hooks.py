@@ -36,7 +36,8 @@ from pg_dir_utils import (
     add_lcm_key,
     post_pg_license,
     fabric_interface_changed,
-    load_iptables
+    load_iptables,
+    restart_on_change
 )
 
 hooks = Hooks()
@@ -74,7 +75,7 @@ def plumgrid_joined(relation_id=None):
     '''
     opsvm_ip = config('opsvm-ip')
     if opsvm_ip == '127.0.0.1':
-        return 1
+        pass
     elif not is_ip(opsvm_ip):
         raise ValueError('Incorrect IP specified')
     else:
@@ -138,13 +139,13 @@ def start():
 
 
 @hooks.hook('upgrade-charm')
+@restart_on_change(restart_map())
 def upgrade_charm():
     '''
     This hook is run when the charm is upgraded
     '''
     ensure_mtu()
     CONFIGS.write_all()
-    restart_pg()
 
 
 @hooks.hook('stop')
