@@ -411,7 +411,6 @@ def get_cidr_from_iface(interface):
 
 def director_cluster_ready():
     dirs_count = len(pg_dir_context._pg_dir_ips())
-    log('DIR COUNT: %s' % dirs_count)
     return True if dirs_count == 2 else False
 
 

@@ -31,12 +31,11 @@ def _pg_dir_ips():
     Inspects plumgrid-director peer relation and returns the
     ips of the peer directors
     '''
-    pg_dir_ips = []
-    for rid in relation_ids('director'):
-        for unit in related_units(rid):
-            rdata = relation_get(rid=rid, unit=unit)
-            pg_dir_ips.append(get_host_ip(rdata['private-address']))
-    return pg_dir_ips
+    return [get_host_ip(rdata['private-address'])
+            for rid in relation_ids("director")
+            for rdata in
+            (relation_get(rid=rid, unit=unit) for unit in related_units(rid))
+            if rdata]
 
 
 class PGDirContext(context.NeutronContext):
