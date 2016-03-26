@@ -60,7 +60,7 @@ class PGDirContextTest(CharmTestCase):
                 return "neutron.randomconfig"
 
         config = {'plumgrid-virtual-ip': "192.168.100.250",
-                  'opsvm-ip':'127.0.0.1'}
+                  'opsvm-ip': '127.0.0.1'}
 
         def mock_config(key=None):
             if key:

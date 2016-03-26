@@ -77,10 +77,8 @@ def plumgrid_joined(relation_id=None):
     This hook is run when relation with edge or gateway is created.
     '''
     opsvm_ip = config('opsvm-ip')
-    if opsvm_ip == '127.0.0.1':
-        pass
-    elif not is_ip(opsvm_ip):
-        raise ValueError('Incorrect IP specified')
+    if not is_ip(opsvm_ip):
+        raise ValueError('Incorrect OPSVM IP specified')
     else:
         relation_set(relation_id=relation_id, opsvm_ip=opsvm_ip)
 
@@ -137,7 +135,7 @@ def start():
         while (count < 10):
             if post_pg_license():
                 break
-            count = count + 1
+            count += 1
             time.sleep(15)
 
 
