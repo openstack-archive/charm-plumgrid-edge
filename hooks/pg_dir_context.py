@@ -78,18 +78,15 @@ class PGDirContext(context.NeutronContext):
                           fallback=get_host_ip(unit_get('private-address')))))
         pg_dir_ips = sorted(pg_dir_ips)
         pg_ctxt['director_ips'] = pg_dir_ips
-        pg_dir_ips_string = ''
-        single_ip = True
-        for ip in pg_dir_ips:
-            if single_ip:
-                pg_dir_ips_string = str(ip)
-                single_ip = False
-            else:
-                pg_dir_ips_string = pg_dir_ips_string + ',' + str(ip)
-        pg_ctxt['director_ips_string'] = pg_dir_ips_string
-        PG_VIP = config('plumgrid-virtual-ip')
+        dir_count = len(pg_dir_ips)
+        pg_ctxt['director_ips_string'] = (str(pg_dir_ips[0]) + ',' +
+                                          str(pg_dir_ips[1]) + ',' +
+                                          str(pg_dir_ips[2])
+                                          if dir_count == 3 else
+                                          str(pg_dir_ips[0]))
+        PG_VIP = conf['plumgrid-virtual-ip']
         if is_ip(PG_VIP):
-            pg_ctxt['virtual_ip'] = conf['plumgrid-virtual-ip']
+            pg_ctxt['virtual_ip'] = PG_VIP
         else:
             raise ValueError('Invalid PLUMgrid Virtual IP Provided')
         unit_hostname = gethostname()
