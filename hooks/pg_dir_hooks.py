@@ -21,13 +21,13 @@ from charmhelpers.core.hookenv import (
 
 from charmhelpers.fetch import (
     apt_install,
-    apt_purge,
     configure_sources,
 )
 
 from pg_dir_utils import (
     register_configs,
     restart_pg,
+    restart_map,
     stop_pg,
     determine_packages,
     load_iovisor,
@@ -37,7 +37,8 @@ from pg_dir_utils import (
     post_pg_license,
     fabric_interface_changed,
     load_iptables,
-    restart_on_change
+    restart_on_change,
+    director_cluster_ready
 )
 
 hooks = Hooks()
@@ -60,12 +61,14 @@ def install():
 
 
 @hooks.hook('director-relation-joined')
+@restart_on_change(restart_map())
 def dir_joined():
     '''
     This hook is run when a unit of director is added.
     '''
-    CONFIGS.write_all()
-    restart_pg()
+    if director_cluster_ready():
+        ensure_mtu()
+        CONFIGS.write_all()
 
 
 @hooks.hook('plumgrid-relation-joined')
@@ -154,10 +157,6 @@ def stop():
     This hook is run when the charm is destroyed.
     '''
     stop_pg()
-    remove_iovisor()
-    pkgs = determine_packages()
-    for pkg in pkgs:
-        apt_purge(pkg, fatal=False)
 
 
 def main():

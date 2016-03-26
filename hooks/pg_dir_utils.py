@@ -409,6 +409,15 @@ def get_cidr_from_iface(interface):
         return None
 
 
+def director_cluster_ready():
+    dirs_count = len(pg_dir_context._pg_dir_ips())
+    log('DIR COUNT: %s' % dirs_count)
+    if dirs_count == 2:
+        return True
+    else:
+        return False
+
+
 def restart_on_change(restart_map):
     """
     Restart services based on configuration files changing

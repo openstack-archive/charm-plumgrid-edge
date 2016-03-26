@@ -59,7 +59,8 @@ class PGDirContextTest(CharmTestCase):
             if section == "config":
                 return "neutron.randomconfig"
 
-        config = {'plumgrid-virtual-ip': "192.168.100.250"}
+        config = {'plumgrid-virtual-ip': "192.168.100.250",
+                  'opsvm-ip':'127.0.0.1'}
 
         def mock_config(key=None):
             if key:
@@ -99,5 +100,6 @@ class PGDirContextTest(CharmTestCase):
                              '192.168.100.203'],
             'director_ips_string':
             '192.168.100.201,192.168.100.202,192.168.100.203',
+            'opsvm_ip': '127.0.0.1',
         }
         self.assertEquals(expect, napi_ctxt())
