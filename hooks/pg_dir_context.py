@@ -31,12 +31,11 @@ def _pg_dir_ips():
     Inspects plumgrid-director peer relation and returns the
     ips of the peer directors
     '''
-    pg_dir_ips = []
-    for rid in relation_ids('director'):
-        for unit in related_units(rid):
-            rdata = relation_get(rid=rid, unit=unit)
-            pg_dir_ips.append(get_host_ip(rdata['private-address']))
-    return pg_dir_ips
+    return [get_host_ip(rdata['private-address'])
+            for rid in relation_ids("director")
+            for rdata in
+            (relation_get(rid=rid, unit=unit) for unit in related_units(rid))
+            if rdata]
 
 
 class PGDirContext(context.NeutronContext):
@@ -79,18 +78,15 @@ class PGDirContext(context.NeutronContext):
                           fallback=get_host_ip(unit_get('private-address')))))
         pg_dir_ips = sorted(pg_dir_ips)
         pg_ctxt['director_ips'] = pg_dir_ips
-        pg_dir_ips_string = ''
-        single_ip = True
-        for ip in pg_dir_ips:
-            if single_ip:
-                pg_dir_ips_string = str(ip)
-                single_ip = False
-            else:
-                pg_dir_ips_string = pg_dir_ips_string + ',' + str(ip)
-        pg_ctxt['director_ips_string'] = pg_dir_ips_string
-        PG_VIP = config('plumgrid-virtual-ip')
+        dir_count = len(pg_dir_ips)
+        pg_ctxt['director_ips_string'] = (str(pg_dir_ips[0]) + ',' +
+                                          str(pg_dir_ips[1]) + ',' +
+                                          str(pg_dir_ips[2])
+                                          if dir_count == 3 else
+                                          str(pg_dir_ips[0]))
+        PG_VIP = conf['plumgrid-virtual-ip']
         if is_ip(PG_VIP):
-            pg_ctxt['virtual_ip'] = conf['plumgrid-virtual-ip']
+            pg_ctxt['virtual_ip'] = PG_VIP
         else:
             raise ValueError('Invalid PLUMgrid Virtual IP Provided')
         unit_hostname = gethostname()
@@ -103,5 +99,6 @@ class PGDirContext(context.NeutronContext):
         pg_ctxt['fabric_mode'] = 'host'
         virtual_ip_array = re.split('\.', conf['plumgrid-virtual-ip'])
         pg_ctxt['virtual_router_id'] = virtual_ip_array[3]
+        pg_ctxt['opsvm_ip'] = conf['opsvm-ip']
 
         return pg_ctxt

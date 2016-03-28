@@ -12,7 +12,6 @@ from socket import gethostname as get_unit_hostname
 from copy import deepcopy
 from charmhelpers.contrib.openstack.neutron import neutron_plugin_attribute
 from charmhelpers.contrib.openstack import templating
-from charmhelpers.core.host import set_nic_mtu
 from charmhelpers.contrib.storage.linux.ceph import modprobe
 from charmhelpers.core.hookenv import (
     log,
@@ -30,7 +29,9 @@ from charmhelpers.contrib.network.ip import (
 from charmhelpers.core.host import (
     service_start,
     service_stop,
-    service_running
+    service_running,
+    path_hash,
+    set_nic_mtu
 )
 from charmhelpers.fetch import (
     apt_cache,
@@ -50,6 +51,7 @@ PG_DEF_CONF = '%s/conf/pg/nginx.conf' % PG_LXC_DATA_PATH
 PG_HN_CONF = '%s/conf/etc/hostname' % PG_LXC_DATA_PATH
 PG_HS_CONF = '%s/conf/etc/hosts' % PG_LXC_DATA_PATH
 PG_IFCS_CONF = '%s/conf/pg/ifcs.conf' % PG_LXC_DATA_PATH
+OPS_CONF = '%s/conf/etc/00-pg.conf' % PG_LXC_DATA_PATH
 AUTH_KEY_PATH = '%s/root/.ssh/authorized_keys' % PG_LXC_DATA_PATH
 TEMP_LICENSE_FILE = '/tmp/license'
 
@@ -71,6 +73,10 @@ BASE_RESOURCE_MAP = OrderedDict([
         'contexts': [pg_dir_context.PGDirContext()],
     }),
     (PG_HS_CONF, {
+        'services': ['plumgrid'],
+        'contexts': [pg_dir_context.PGDirContext()],
+    }),
+    (OPS_CONF, {
         'services': ['plumgrid'],
         'contexts': [pg_dir_context.PGDirContext()],
     }),
@@ -401,3 +407,24 @@ def get_cidr_from_iface(interface):
             return None
     else:
         return None
+
+
+def director_cluster_ready():
+    dirs_count = len(pg_dir_context._pg_dir_ips())
+    return True if dirs_count == 2 else False
+
+
+def restart_on_change(restart_map):
+    """
+    Restart services based on configuration files changing
+    """
+    def wrap(f):
+        def wrapped_f(*args, **kwargs):
+            checksums = {path: path_hash(path) for path in restart_map}
+            f(*args, **kwargs)
+            for path in restart_map:
+                if path_hash(path) != checksums[path]:
+                    restart_pg()
+                    break
+        return wrapped_f
+    return wrap
