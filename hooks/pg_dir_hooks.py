@@ -16,7 +16,8 @@ from charmhelpers.core.hookenv import (
     log,
     config,
     relation_set,
-    relation_ids
+    relation_ids,
+    status_set
 )
 
 from charmhelpers.fetch import (
@@ -50,8 +51,10 @@ def install():
     '''
     Install hook is run when the charm is first deployed on a node.
     '''
+    status_set('maintenance', 'Executing pre-install')
     load_iptables()
     configure_sources(update=True)
+    status_set('maintenance', 'Installing apt packages')
     pkgs = determine_packages()
     for pkg in pkgs:
         apt_install(pkg, options=['--force-yes'], fatal=True)
@@ -108,6 +111,7 @@ def config_changed():
         charm_config.changed('plumgrid-build') or
         charm_config.changed('install_keys') or
             charm_config.changed('iovisor-build')):
+        status_set('maintenance', 'Upgrading apt packages')
         stop_pg()
         configure_sources(update=True)
         pkgs = determine_packages()
@@ -155,6 +159,14 @@ def stop():
     This hook is run when the charm is destroyed.
     '''
     stop_pg()
+
+
+@hooks.hook('update-status')
+def update_status():
+    if service_running('plumgrid'):
+        status_set('active', 'Unit is ready')
+    else:
+        status_set('blocked', 'plumgrid service not running')
 
 
 def main():
