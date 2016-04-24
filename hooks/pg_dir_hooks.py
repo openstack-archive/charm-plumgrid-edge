@@ -17,7 +17,8 @@ from charmhelpers.core.hookenv import (
     config,
     relation_set,
     relation_ids,
-    status_set
+    status_set,
+    is_leader
 )
 
 from charmhelpers.fetch import (
@@ -97,7 +98,7 @@ def config_changed():
         if add_lcm_key():
             log("PLUMgrid LCM Key added")
     if charm_config.changed('plumgrid-license-key'):
-        if post_pg_license():
+        if is_leader() and post_pg_license():
             log("PLUMgrid License Posted")
     if charm_config.changed('fabric-interfaces'):
         if not fabric_interface_changed():
