@@ -31,7 +31,8 @@ TO_PATCH = [
     'determine_packages',
     'post_pg_license',
     'config',
-    'load_iptables'
+    'load_iptables',
+    'status_set'
 ]
 NEUTRON_CONF_DIR = "/etc/neutron"
 
