@@ -97,7 +97,9 @@ def plumgrid_configs_joined(relation_id=None):
         'plumgrid_username': config('plumgrid-username'),
         'plumgrid_password': config('plumgrid-password'),
     }
-    relation_set(relation_id=relation_id, relation_settings=relation_settings)
+    if is_leader():
+        relation_set(relation_id=relation_id,
+                     relation_settings=relation_settings)
 
 
 @hooks.hook('config-changed')
