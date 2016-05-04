@@ -3,6 +3,14 @@ options:
     default: 192.168.100.250
     type: string
     description: IP address of the Director's Management interface. Same IP can be used to access PG Console.
+  plumgrid-username:
+    default: plumgrid
+    type: string
+    description: Username to access PLUMgrid Director
+  plumgrid-password:
+    default: plumgrid
+    type: string
+    description: Password to access PLUMgrid Director
   lcm-ssh-key:
     default: 'null'
     type: string
