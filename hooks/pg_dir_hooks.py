@@ -87,6 +87,21 @@ def plumgrid_joined(relation_id=None):
         relation_set(relation_id=relation_id, opsvm_ip=opsvm_ip)
 
 
+@hooks.hook('plumgrid-configs-relation-joined')
+def plumgrid_configs_joined(relation_id=None):
+    '''
+    This hook is run when relation with neutron-api-plumgrid is created.
+    '''
+    relation_settings = {
+        'plumgrid_virtual_ip': config('plumgrid-virtual-ip'),
+        'plumgrid_username': config('plumgrid-username'),
+        'plumgrid_password': config('plumgrid-password'),
+    }
+    if is_leader():
+        relation_set(relation_id=relation_id,
+                     relation_settings=relation_settings)
+
+
 @hooks.hook('config-changed')
 def config_changed():
     '''
@@ -108,6 +123,12 @@ def config_changed():
     if charm_config.changed('plumgrid-virtual-ip'):
         CONFIGS.write_all()
         stop_pg()
+        for rid in relation_ids('plumgrid-configs'):
+            plumgrid_configs_joined(rid)
+    if (charm_config.changed('plumgrid-username') or
+            charm_config.changed('plumgrid-password')):
+        for rid in relation_ids('plumgrid-configs'):
+            plumgrid_configs_joined(rid)
     if (charm_config.changed('install_sources') or
         charm_config.changed('plumgrid-build') or
         charm_config.changed('install_keys') or
