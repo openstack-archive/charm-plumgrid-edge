@@ -40,7 +40,8 @@ from pg_dir_utils import (
     fabric_interface_changed,
     load_iptables,
     restart_on_change,
-    director_cluster_ready
+    director_cluster_ready,
+    configure_pg_sources
 )
 
 hooks = Hooks()
@@ -135,6 +136,9 @@ def config_changed():
             charm_config.changed('iovisor-build')):
         status_set('maintenance', 'Upgrading apt packages')
         stop_pg()
+        if charm_config.changed('install_sources'):
+            if not configure_pg_sources():
+                log('IOError: /etc/apt/sources.list couldn\'t be updated')
         configure_sources(update=True)
         pkgs = determine_packages()
         for pkg in pkgs:
