@@ -24,8 +24,6 @@ from charmhelpers.contrib.network.ip import (
     get_bridges,
     get_bridge_nics,
     is_ip,
-    is_address_in_network,
-    get_iface_addr
 )
 from charmhelpers.core.host import (
     service_start,
@@ -268,11 +266,7 @@ def get_fabric_interface():
         else:
             raise ValueError('No fabric interface provided for node')
         if interface_exists(node_fabric_interface):
-            if is_address_in_network(config('os-data-network'),
-                                     get_iface_addr(node_fabric_interface)[0]):
-                return node_fabric_interface
-            else:
-                raise ValueError('Fabric interface not in fabric network')
+            return node_fabric_interface
         else:
             log('Provided fabric interface %s does not exist'
                 % node_fabric_interface)
