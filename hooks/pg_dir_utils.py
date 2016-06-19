@@ -24,8 +24,6 @@ from charmhelpers.contrib.network.ip import (
     get_bridges,
     get_bridge_nics,
     is_ip,
-    is_address_in_network,
-    get_iface_addr
 )
 from charmhelpers.core.host import (
     service_start,
