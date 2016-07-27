@@ -224,7 +224,7 @@ def get_mgmt_interface():
     mgmt_interface = config('mgmt-interface')
     if not mgmt_interface:
         return get_iface_from_addr(unit_get('private-address'))
-    elif mgmt_interface and interface_exists(mgmt_interface):
+    elif interface_exists(mgmt_interface):
         return mgmt_interface
     else:
         log('Provided managment interface %s does not exist'
