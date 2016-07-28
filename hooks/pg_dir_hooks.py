@@ -166,6 +166,9 @@ def start():
                 break
             count += 1
             time.sleep(15)
+        if count == 10:
+            raise ValueError("Error occurred while posting plumgrid license"
+                             "key. Please check plumgrid services.")
 
 
 @hooks.hook('upgrade-charm')
