@@ -41,7 +41,8 @@ from pg_dir_utils import (
     load_iptables,
     restart_on_change,
     director_cluster_ready,
-    configure_pg_sources
+    configure_pg_sources,
+    configure_analyst_opsvm
 )
 
 hooks = Hooks()
@@ -159,6 +160,7 @@ def start():
     '''
     This hook is run when the charm is started.
     '''
+    configure_analyst_opsvm()
     if config('plumgrid-license-key') is not None:
         count = 0
         while (count < 10):

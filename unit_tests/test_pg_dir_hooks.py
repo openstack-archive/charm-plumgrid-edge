@@ -32,7 +32,8 @@ TO_PATCH = [
     'post_pg_license',
     'config',
     'load_iptables',
-    'status_set'
+    'status_set',
+    'configure_analyst_opsvm'
 ]
 NEUTRON_CONF_DIR = "/etc/neutron"
 
