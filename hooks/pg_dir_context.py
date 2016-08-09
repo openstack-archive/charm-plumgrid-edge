@@ -26,6 +26,30 @@ from socket import (
 )
 
 
+def _pg_edge_ips():
+    '''
+    Inspects edge-peer relation and returns the
+    ips of the edge nodes
+    '''
+    return [get_host_ip(rdata['private-address'])
+            for rid in relation_ids("plumgrid")
+            for rdata in
+            (relation_get(rid=rid, unit=unit) for unit in related_units(rid))
+            if 'edge-peer' in rdata]
+
+
+def _pg_gateway_ips():
+    '''
+    Inspects gateway-peer relation and returns the
+    ips of the gateway nodes
+    '''
+    return [get_host_ip(rdata['private-address'])
+            for rid in relation_ids("plumgrid")
+            for rdata in
+            (relation_get(rid=rid, unit=unit) for unit in related_units(rid))
+            if 'gateway-peer' in rdata]
+
+
 def _pg_dir_ips():
     '''
     Inspects plumgrid-director peer relation and returns the

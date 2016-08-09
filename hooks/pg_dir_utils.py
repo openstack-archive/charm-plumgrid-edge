@@ -24,6 +24,8 @@ from charmhelpers.contrib.network.ip import (
     get_bridges,
     get_bridge_nics,
     is_ip,
+    get_iface_addr,
+    get_host_ip
 )
 from charmhelpers.core.host import (
     service_start,
@@ -38,6 +40,11 @@ from charmhelpers.fetch import (
 )
 from charmhelpers.contrib.openstack.utils import (
     os_release,
+)
+from pg_dir_context import (
+    _pg_dir_ips,
+    _pg_edge_ips,
+    _pg_gateway_ips
 )
 
 SOURCES_LIST = '/etc/apt/sources.list'
@@ -109,8 +116,8 @@ def configure_analyst_opsvm():
     '''
     if not service_running('plumgrid'):
         restart_pg()
-    NS_ENTER = ('/opt/local/bin/nsenter -t $(ps ho pid --ppid '
-                '$(cat /var/run/libvirt/lxc/plumgrid.pid)) -m -n -u -i -p ')
+    NS_ENTER = ('/opt/local/bin/nsenter -t $(ps ho pid --ppid $(cat '
+                '/var/run/libvirt/lxc/plumgrid.pid)) -m -n -u -i -p ')
     sigmund_stop = NS_ENTER + '/usr/bin/service plumgrid-sigmund stop'
     sigmund_status = NS_ENTER \
         + '/usr/bin/service plumgrid-sigmund status'
@@ -248,7 +255,13 @@ def get_mgmt_interface():
     '''
     mgmt_interface = config('mgmt-interface')
     if not mgmt_interface:
-        return get_iface_from_addr(unit_get('private-address'))
+        try:
+            return get_iface_from_addr(unit_get('private-address'))
+        except:
+            for bridge_interface in get_bridges():
+                if (get_host_ip(unit_get('private-address'))
+                        in get_iface_addr(bridge_interface)):
+                    return bridge_interface
     elif interface_exists(mgmt_interface):
         return mgmt_interface
     else:
@@ -396,6 +409,141 @@ def post_pg_license():
         log('No change in PLUMgrid License')
         return 0
     return 1
+
+
+def sapi_post_ips():
+    pg_edge_ips = _pg_edge_ips()
+    pg_dir_ips = _pg_dir_ips()
+    pg_gateway_ips = _pg_gateway_ips()
+    pg_dir_ips.append(get_host_ip(unit_get('private-address')))
+    pg_edge_ips = '"edge_ips"' + ':' \
+        + '"{}"'.format(','.join(str(i) for i in pg_edge_ips))
+    pg_dir_ips = '"director_ips"' + ':' \
+        + '"{}"'.format(','.join(str(i) for i in pg_dir_ips))
+    pg_gateway_ips = '"gateway_ips"' + ':' \
+        + '"{}"'.format(','.join(str(i) for i in pg_gateway_ips))
+    opsvm_ip = '"opsvm_ip"' + ':' + '"{}"'.format(config('opsvm-ip'))
+    virtual_ip = '"virtual_ip"' + ':' \
+        + '"{}"'.format(config('plumgrid-virtual-ip'))
+    JSON_IPS = ','.join([pg_dir_ips, pg_edge_ips, pg_gateway_ips,
+                        opsvm_ip, virtual_ip])
+    status = (
+        'curl -H \'Content-Type: application/json\' -X '
+        'PUT -d \'{{{0}}}\' http://{1}' + ':' + '{2}/v1/zones/{3}/allIps'
+    ).format(JSON_IPS, config('lcm-ip'), config('sapi-port'),
+             config('sapi-zone'))
+    print "POST_IPS    {}".format(status)
+    if 'success' in _exec_cmd_output(
+        status,
+            'No response from specified LCM IP!'):
+        log('Successfully posted Zone IPs to Solutions API server!')
+
+
+def _exec_cmd_output(cmd=None, error_msg='Command exited with ERRORs',
+                     fatal=False):
+    '''
+    Function to get output from bash command executed on the node.
+    '''
+    if cmd is None:
+        log("No command specified")
+    else:
+        if fatal:
+            return subprocess.check_output(cmd, shell=True)
+        else:
+            try:
+                return subprocess.check_output(cmd, shell=True)
+            except subprocess.CalledProcessError:
+                log(error_msg)
+                return None
+
+
+def sapi_post_license():
+    username = '"user_name":' + '"{}"'.format(config('plumgrid-username'))
+    password = '"password":' + '"{}"'.format(config('plumgrid-password'))
+    license = '"license":' + '"{}"'.format(config('plumgrid-license-key'))
+    JSON_LICENSE = ','.join([username, password, license])
+    status = (
+        'curl -H \'Content-Type: application/json\' -X '
+        'PUT -d \'{{{0}}}\' http://{1}' + ':' + '{2}/v1/zones/{3}/pgLicense'
+    ).format(JSON_LICENSE, config('lcm-ip'), config('sapi-port'),
+             config('sapi-zone'))
+    print "POST_LICENSE status: {}".format(status)
+    if 'success' in _exec_cmd_output(
+        status,
+            'No response from specified LCM IP!'):
+        log('Successfully posted license file for zone "{}"!'
+            .format(config('sapi-zone')))
+
+
+def sapi_post_zone_info():
+    sol_name = '"solution_name":"Ubuntu OpenStack"'
+    sol_version = '"solution_version":"12"'
+    pg_ons_version = _exec_cmd_output(
+        'dpkg -l | grep plumgrid | awk \'{print $3}\' | '
+        'sed \'s/-/./\' | cut -f1 -d"-"',
+        'Unable to obtain PG ONS version'
+    ).replace('\n', '')
+    pg_ons_version = \
+        '"pg_ons_version":"{}"'.format(pg_ons_version)
+    hypervisor = '"hypervisor":"Ubuntu"'
+    hypervisor_version = \
+        _exec_cmd_output('lsb_release -r | awk \'{print $2}\'',
+                         'Unable to obtain solution version'
+                         ).replace('\n', '')
+    hypervisor_version = '"hypervisor_version":"{}"' \
+                         .format(hypervisor_version)
+    kernel_version = _exec_cmd_output(
+        'uname -r',
+        'Unable to obtain kernal version').replace('\n', '')
+    kernel_version = \
+        '"kernel_version":"{}"'.format(kernel_version)
+    cloudapex_path = '/var/lib/libvirt/filesystems/plumgrid/' \
+                     'opt/pg/web/cloudApex/modules/appCloudApex' \
+                     '/appCloudApex.js'
+    if os.path.isfile(cloudapex_path):
+        pg_cloudapex_version = 'cat ' \
+            + '{}'.format(cloudapex_path) \
+            + ' | grep -i appversion | awk \'{print $2}\''
+        pg_cloudapex_version = \
+            _exec_cmd_output(pg_cloudapex_version,
+                             'Unable to retrieve CloudApex version'
+                             ).replace('\n', '')
+    else:
+        log('CloudApex not installed!')
+        pg_cloudapex_version = ''
+    pg_cloudapex_version = \
+        '"pg_cloudapex_version":"{}"'.format(pg_cloudapex_version)
+    JSON_ZONE_INFO = ','.join([
+        sol_name,
+        sol_version,
+        pg_ons_version,
+        hypervisor,
+        hypervisor_version,
+        kernel_version,
+        pg_cloudapex_version,
+    ])
+    status = (
+        'curl -H \'Content-Type: application/json\' -X '
+        'PUT -d \'{{{0}}}\' http://{1}:{2}/v1/zones/{3}/zoneinfo'
+    ).format(JSON_ZONE_INFO, config('lcm-ip'), config('sapi-port'),
+             config('sapi-zone'))
+    print "ZONE_INFO status = {}".format(status)
+    if 'success' in _exec_cmd_output(
+        status,
+            'No response from specified LCM IP!'):
+        log('Successfully posted Zone IPs to Solutions API server!')
+
+
+def is_zone_info_available():
+    zone_info = 'curl -H "Content-Type: application/json" -X GET '\
+        + 'http://{}:8099/v1/zones/pgzone/zoneInfo'.format(config('lcm-ip'))
+    try:
+        status = subprocess.check_output(zone_info, shell=True)
+        if "success" in status:
+            return True
+    except:
+        log('No response from specified LCM IP')
+        return False
 
 
 def load_iptables():
