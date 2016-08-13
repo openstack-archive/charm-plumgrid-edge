@@ -93,11 +93,7 @@ def plumgrid_joined(relation_id=None):
     else:
         relation_set(relation_id=relation_id, opsvm_ip=opsvm_ip)
     if is_leader():
-        if is_ip(config('lcm-ip')):
-            sapi_post_ips()
-            sapi_post_zone_info()
-        else:
-            raise ValueError('Invalid LCM IP specified!')
+        sapi_post_ips()
 
 
 @hooks.hook('plumgrid-configs-relation-joined')
@@ -168,6 +164,11 @@ def config_changed():
     if (charm_config.changed('sapi-port') or
         charm_config.changed('lcm-ip') or
             charm_config.changed('sapi-zone')):
+        if is_leader():
+            if is_ip(config('lcm-ip')):
+                sapi_post_zone_info()
+            else:
+                raise ValueError('Invalid LCM IP specified!')
         for rid in relation_ids('plumgrid'):
             plumgrid_joined(rid)
     ensure_mtu()
@@ -182,7 +183,6 @@ def start():
     This hook is run when the charm is started.
     '''
     configure_analyst_opsvm()
-    sapi_post_zone_info()
     if config('plumgrid-license-key') is not None:
         count = 0
         while (count < 10):

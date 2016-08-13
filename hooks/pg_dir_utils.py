@@ -412,6 +412,9 @@ def post_pg_license():
 
 
 def sapi_post_ips():
+    """
+    Posts PLUMgrid nodes IPs to solutions api server.
+    """
     pg_edge_ips = _pg_edge_ips()
     pg_dir_ips = _pg_dir_ips()
     pg_gateway_ips = _pg_gateway_ips()
@@ -432,7 +435,6 @@ def sapi_post_ips():
         'PUT -d \'{{{0}}}\' http://{1}' + ':' + '{2}/v1/zones/{3}/allIps'
     ).format(JSON_IPS, config('lcm-ip'), config('sapi-port'),
              config('sapi-zone'))
-    print "POST_IPS    {}".format(status)
     if 'success' in _exec_cmd_output(
         status,
             'No response from specified LCM IP!'):
@@ -458,6 +460,9 @@ def _exec_cmd_output(cmd=None, error_msg='Command exited with ERRORs',
 
 
 def sapi_post_license():
+    '''
+    Posts PLUMgrid License to solutions api server
+    '''
     username = '"user_name":' + '"{}"'.format(config('plumgrid-username'))
     password = '"password":' + '"{}"'.format(config('plumgrid-password'))
     license = '"license":' + '"{}"'.format(config('plumgrid-license-key'))
@@ -467,7 +472,6 @@ def sapi_post_license():
         'PUT -d \'{{{0}}}\' http://{1}' + ':' + '{2}/v1/zones/{3}/pgLicense'
     ).format(JSON_LICENSE, config('lcm-ip'), config('sapi-port'),
              config('sapi-zone'))
-    print "POST_LICENSE status: {}".format(status)
     if 'success' in _exec_cmd_output(
         status,
             'No response from specified LCM IP!'):
@@ -476,7 +480,12 @@ def sapi_post_license():
 
 
 def sapi_post_zone_info():
+    '''
+    Posts zone information to solutions api server
+    '''
     sol_name = '"solution_name":"Ubuntu OpenStack"'
+    # As there is no solution version for Ubuntu OpenStack,
+    # so, passing a random value
     sol_version = '"solution_version":"12"'
     pg_ons_version = _exec_cmd_output(
         'dpkg -l | grep plumgrid | awk \'{print $3}\' | '
@@ -527,23 +536,10 @@ def sapi_post_zone_info():
         'PUT -d \'{{{0}}}\' http://{1}:{2}/v1/zones/{3}/zoneinfo'
     ).format(JSON_ZONE_INFO, config('lcm-ip'), config('sapi-port'),
              config('sapi-zone'))
-    print "ZONE_INFO status = {}".format(status)
     if 'success' in _exec_cmd_output(
         status,
             'No response from specified LCM IP!'):
-        log('Successfully posted Zone IPs to Solutions API server!')
-
-
-def is_zone_info_available():
-    zone_info = 'curl -H "Content-Type: application/json" -X GET '\
-        + 'http://{}:8099/v1/zones/pgzone/zoneInfo'.format(config('lcm-ip'))
-    try:
-        status = subprocess.check_output(zone_info, shell=True)
-        if "success" in status:
-            return True
-    except:
-        log('No response from specified LCM IP')
-        return False
+        log('Successfully posted Zone info to Solutions API server!')
 
 
 def load_iptables():
