@@ -44,8 +44,8 @@ def post_license(args):
 
 # A dictionary of all the defined actions to callables (which take
 # parsed arguments).
-ACTIONS = {"restart-pg": restart_pg, "post-ips": post_ips, "post-zone-info": post_zone_info,
-           "post-license": post_license}
+ACTIONS = {"restart-pg": restart_pg, "sapi-post-ips": post_ips, "sapi-post-zone-info": post_zone_info,
+           "sapi-post-license": post_license}
 
 
 def main(args):

@@ -160,7 +160,6 @@ def config_changed():
         for rid in relation_ids('plumgrid'):
             plumgrid_joined(rid)
         stop_pg()
-    # TODO
     if (charm_config.changed('sapi-port') or
         charm_config.changed('lcm-ip') or
             charm_config.changed('sapi-zone')):

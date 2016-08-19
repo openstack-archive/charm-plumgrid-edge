@@ -62,6 +62,14 @@ OPS_CONF = '%s/conf/etc/00-pg.conf' % PG_LXC_DATA_PATH
 AUTH_KEY_PATH = '%s/root/.ssh/authorized_keys' % PG_LXC_DATA_PATH
 TEMP_LICENSE_FILE = '/tmp/license'
 
+# Constant values for OpenStack releases as Canonical-Ubuntu
+# doesn't have any specific solution version associated
+OPENSTACK_RELEASE_VERS = {
+    'kilo': '10',
+    'liberty': '11',
+    'mitaka': '12'
+}
+
 BASE_RESOURCE_MAP = OrderedDict([
     (PG_KA_CONF, {
         'services': ['plumgrid'],
@@ -435,10 +443,13 @@ def sapi_post_ips():
         'PUT -d \'{{{0}}}\' http://{1}' + ':' + '{2}/v1/zones/{3}/allIps'
     ).format(JSON_IPS, config('lcm-ip'), config('sapi-port'),
              config('sapi-zone'))
-    if 'success' in _exec_cmd_output(
+    POST_ZONE_IPs = _exec_cmd_output(
         status,
-            'No response from specified LCM IP!'):
-        log('Successfully posted Zone IPs to Solutions API server!')
+        'Posting Zone IPs to Solutions API server failed!')
+    if POST_ZONE_IPs:
+        if 'success' in POST_ZONE_IPs:
+            log('Successfully posted Zone IPs to Solutions API server!')
+        log(POST_ZONE_IPs)
 
 
 def _exec_cmd_output(cmd=None, error_msg='Command exited with ERRORs',
@@ -472,11 +483,14 @@ def sapi_post_license():
         'PUT -d \'{{{0}}}\' http://{1}' + ':' + '{2}/v1/zones/{3}/pgLicense'
     ).format(JSON_LICENSE, config('lcm-ip'), config('sapi-port'),
              config('sapi-zone'))
-    if 'success' in _exec_cmd_output(
+    POST_LICENSE = _exec_cmd_output(
         status,
-            'No response from specified LCM IP!'):
-        log('Successfully posted license file for zone "{}"!'
-            .format(config('sapi-zone')))
+        'Posting PLUMgrid License to Solutions API server failed!')
+    if POST_LICENSE:
+        if 'success' in POST_LICENSE:
+            log('Successfully posted license file for zone "{}"!'
+                .format(config('sapi-zone')))
+        log(POST_LICENSE)
 
 
 def sapi_post_zone_info():
@@ -484,9 +498,13 @@ def sapi_post_zone_info():
     Posts zone information to solutions api server
     '''
     sol_name = '"solution_name":"Ubuntu OpenStack"'
-    # As there is no solution version for Ubuntu OpenStack,
-    # so, passing a random value
-    sol_version = '"solution_version":"12"'
+    release = config('openstack-release')
+    for key, value in OPENSTACK_RELEASE_VERS.iteritems():
+        if release == value:
+            sol_version = value
+        else:
+            sol_version = 10
+    sol_version = '"solution_version":"{}"'.format(sol_version)
     pg_ons_version = _exec_cmd_output(
         'dpkg -l | grep plumgrid | awk \'{print $3}\' | '
         'sed \'s/-/./\' | cut -f1 -d"-"',
@@ -536,10 +554,14 @@ def sapi_post_zone_info():
         'PUT -d \'{{{0}}}\' http://{1}:{2}/v1/zones/{3}/zoneinfo'
     ).format(JSON_ZONE_INFO, config('lcm-ip'), config('sapi-port'),
              config('sapi-zone'))
-    if 'success' in _exec_cmd_output(
+    POST_ZONE_INFO = _exec_cmd_output(
         status,
-            'No response from specified LCM IP!'):
-        log('Successfully posted Zone info to Solutions API server!')
+        'Posting Zone Information to Solutions API server failed!')
+    if POST_ZONE_INFO:
+        if 'success' in POST_ZONE_INFO:
+            log('Successfully posted Zone information to Solutions API'
+                ' server!')
+        log(POST_ZONE_INFO)
 
 
 def load_iptables():

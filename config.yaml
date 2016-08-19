@@ -67,3 +67,9 @@ options:
     default: pgzone
     type: string
     description: Zone name used by Solutions API to get/post cloud information.
+  openstack-release:
+    default: kilo
+    type: string
+    description: |
+        OpenStack release to determine solution version that will be posted to
+        Solutions API server.
