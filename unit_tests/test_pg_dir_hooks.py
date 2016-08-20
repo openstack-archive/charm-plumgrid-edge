@@ -33,7 +33,8 @@ TO_PATCH = [
     'config',
     'load_iptables',
     'status_set',
-    'configure_analyst_opsvm'
+    'configure_analyst_opsvm',
+    'sapi_post_zone_info'
 ]
 NEUTRON_CONF_DIR = "/etc/neutron"
 

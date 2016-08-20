@@ -9,7 +9,6 @@ import sys
 import time
 from charmhelpers.core.host import service_running
 from charmhelpers.contrib.network.ip import is_ip
-
 from charmhelpers.core.hookenv import (
     Hooks,
     UnregisteredHookError,
@@ -42,7 +41,10 @@ from pg_dir_utils import (
     restart_on_change,
     director_cluster_ready,
     configure_pg_sources,
-    configure_analyst_opsvm
+    configure_analyst_opsvm,
+    sapi_post_ips,
+    sapi_post_license,
+    sapi_post_zone_info
 )
 
 hooks = Hooks()
@@ -67,6 +69,7 @@ def install():
 
 
 @hooks.hook('director-relation-joined')
+@hooks.hook('director-relation-changed')
 @restart_on_change(restart_map())
 def dir_joined():
     '''
@@ -77,16 +80,20 @@ def dir_joined():
         CONFIGS.write_all()
 
 
-@hooks.hook('plumgrid-relation-joined')
+@hooks.hook('plumgrid-relation-joined',
+            'plumgrid-relation-changed',
+            'plumgrid-relation-departed')
 def plumgrid_joined(relation_id=None):
     '''
     This hook is run when relation with edge or gateway is created.
     '''
     opsvm_ip = config('opsvm-ip')
     if not is_ip(opsvm_ip):
-        raise ValueError('Incorrect OPSVM IP specified')
+        raise ValueError('Invalid OPSVM IP specified!')
     else:
         relation_set(relation_id=relation_id, opsvm_ip=opsvm_ip)
+    if is_leader():
+        sapi_post_ips()
 
 
 @hooks.hook('plumgrid-configs-relation-joined')
@@ -117,6 +124,8 @@ def config_changed():
     if charm_config.changed('plumgrid-license-key'):
         if is_leader() and post_pg_license():
             log("PLUMgrid License Posted")
+        # Post PG license to Sol-API
+        sapi_post_license()
     if charm_config.changed('fabric-interfaces'):
         if not fabric_interface_changed():
             log("Fabric interface already set")
@@ -124,6 +133,8 @@ def config_changed():
             stop_pg()
     if charm_config.changed('plumgrid-virtual-ip'):
         CONFIGS.write_all()
+        for rid in relation_ids('plumgrid'):
+            plumgrid_joined(rid)
         stop_pg()
         for rid in relation_ids('plumgrid-configs'):
             plumgrid_configs_joined(rid)
@@ -149,6 +160,16 @@ def config_changed():
         for rid in relation_ids('plumgrid'):
             plumgrid_joined(rid)
         stop_pg()
+    if (charm_config.changed('sapi-port') or
+        charm_config.changed('lcm-ip') or
+            charm_config.changed('sapi-zone')):
+        if is_leader():
+            if is_ip(config('lcm-ip')):
+                sapi_post_zone_info()
+            else:
+                raise ValueError('Invalid LCM IP specified!')
+        for rid in relation_ids('plumgrid'):
+            plumgrid_joined(rid)
     ensure_mtu()
     CONFIGS.write_all()
     if not service_running('plumgrid'):

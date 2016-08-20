@@ -56,3 +56,20 @@ options:
     default: 127.0.0.1
     type: string
     description: IP address of the PLUMgrid Operations VM Management interface.
+  lcm-ip:
+    type: string
+    description: IP used by Solutions API to get/post cloud information.
+  sapi-port:
+    default: 8099
+    type: int
+    description: Port used by Solutions API to get/post cloud information.
+  sapi-zone:
+    default: pgzone
+    type: string
+    description: Zone name used by Solutions API to get/post cloud information.
+  openstack-release:
+    default: kilo
+    type: string
+    description: |
+        OpenStack release to determine solution version that will be posted to
+        Solutions API server.
