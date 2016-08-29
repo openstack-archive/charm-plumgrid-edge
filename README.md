@@ -26,7 +26,7 @@ For plumgrid-director to work make the configuration in the neutron-api and neut
 
 # Known Limitations and Issues
 
-This is an early access version of the PLUMgrid Director charm and it is not meant for production deployments. The charm only supports Kilo Openstack Release.
+This charm currently doesn't support Ubuntu 16.04.
 
 # Configuration
 
@@ -58,4 +58,5 @@ In order to configure networking, PLUMgrid License needs to be posted.
 # Contact Information
 
 Bilal Baqar <bbaqar@plumgrid.com>
-Bilal Ahmad <bilal@plumgrid.com>
+Javeria Khan <javeriak@plumgrid.com>
+Junaid Ali <junaidali@plumgrid.com>
