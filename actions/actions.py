@@ -23,21 +23,21 @@ def restart_pg(args):
 
 def post_ips(args):
     """
-    POST plumgrid nodes IPs to solutions api server.
+    POST PLUMgrid nodes IPs to solutions api server.
     """
     sapi_post_ips()
 
 
 def post_zone_info(args):
     """
-    POST zone information to solutions api server
+    POST PLUMgrid zone information to solutions api server
     """
     sapi_post_zone_info()
 
 
 def post_license(args):
     """
-    POST PLUMgrid License to solutions api server
+    POST PLUMgrid License key to solutions api server
     """
     sapi_post_license()
 

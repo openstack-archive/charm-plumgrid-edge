@@ -3,6 +3,6 @@ restart-pg:
 sapi-post-ips:
   description: Post PLUMgrid nodes IPs to Solutions API server.
 sapi-post-zone-info:
-  description: Post Zone info to Solutions API server.
+  description: Post PLUMgrid Zone info to Solutions API server.
 sapi-post-license:
   description: Post PLUMgrid License to Solutions API server.
