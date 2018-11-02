@@ -1,8 +1,0 @@
-restart-pg:
-  description: Restart the plumgrid-director unit's service.
-sapi-post-ips:
-  description: Post PLUMgrid nodes IPs to Solutions API server.
-sapi-post-zone-info:
-  description: Post PLUMgrid Zone info to Solutions API server.
-sapi-post-license:
-  description: Post PLUMgrid License to Solutions API server.
